@@ -1,0 +1,15 @@
+# Exact versions. Everyone installs these so reruns match bit for bit.
+# Tested on Python 3.13; 3.11 and 3.12 should work. Change a pin only in a PR Brian merges.
+numpy==2.5.3
+pandas==3.0.5
+pyarrow==26.0.0
+lightgbm==4.7.0
+scikit-learn==1.9.1
+yfinance==1.7.0
+requests==2.34.2
+lxml==6.1.3
+exchange_calendars==4.13.2
+PyYAML==6.0.3
+plotly==7.1.0
+streamlit==1.66.0
+pytest==9.1.1

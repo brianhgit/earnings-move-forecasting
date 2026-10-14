@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "btb"
+version = "0.1.0"
+description = "Forecasting the size of S&P 500 earnings-day stock moves"
+requires-python = ">=3.11"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["contract: tests for a pipeline piece that may not be written yet (skipped until it is)"]

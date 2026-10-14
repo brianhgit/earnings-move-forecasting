@@ -1,0 +1,16 @@
+# Data never goes on GitHub (Yahoo terms). Only the manifest of checksums does.
+data/*
+!data/MANIFEST.json
+!data/README.md
+
+# Real-run artifacts that can contain prices stay local; metrics, predictions and ledger are committed
+live/drops/*/model.pkl
+
+__pycache__/
+*.egg-info/
+.venv/
+.ipynb_checkpoints/
+.DS_Store
+.pytest_cache/
+.streamlit/secrets.toml
+live/*/*/model.pkl
