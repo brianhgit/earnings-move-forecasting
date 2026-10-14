@@ -1,0 +1,13 @@
+{
+  "run_id": "20261014-225848_live_drop2",
+  "created_utc": "2026-10-14T22:58:48+00:00",
+  "kind": "live",
+  "data_source": "synthetic",
+  "name": "live_drop2",
+  "author": "root",
+  "git_sha": "b3fa8ab",
+  "git_dirty": true,
+  "config_hash": "204744e9a666",
+  "data_hash": "7cf0224d38c5",
+  "note": "Live sanity check. 95% range resamples trading days; descriptive only."
+}

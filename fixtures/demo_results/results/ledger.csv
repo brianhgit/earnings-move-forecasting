@@ -1,0 +1,7 @@
+run_id,created_utc,kind,data_source,name,author,git_sha,git_dirty,config_hash,data_hash,n_events,n_weeks,mae_baseline,mae_model,rel_improvement,ci_low,ci_high,win_rate,beats_shrinkage,tripwire,note
+20261014-225842_lgbm_l2,2026-10-14T22:58:42+00:00,dev,synthetic,lgbm_l2,root,b3fa8ab,True,204744e9a666,e17a44b0e359,1800,84,3.0833,3.1305,-0.0153,-0.0585,0.0252,0.5006,False,False,"first try: default L2 loss (aims at the mean, wrong for MAE)"
+20261014-225843_lgbm_l1_100trees,2026-10-14T22:58:43+00:00,dev,synthetic,lgbm_l1_100trees,root,b3fa8ab,True,204744e9a666,e17a44b0e359,1800,84,3.0833,2.8148,0.0871,0.0632,0.1104,0.5711,True,False,"L1 loss, fewer trees"
+20261014-225845_lgbm_l1,2026-10-14T22:58:45+00:00,dev,synthetic,lgbm_l1,root,b3fa8ab,True,204744e9a666,e17a44b0e359,1800,84,3.0833,2.856,0.0737,0.048,0.0975,0.5644,True,False,"L1 loss, locked settings"
+20261014-225847_lockbox,2026-10-14T22:58:47+00:00,lockbox,synthetic,lockbox,root,b3fa8ab,True,204744e9a666,0d108dc84924,1050,49,2.7032,2.5008,0.0749,0.036,0.1126,0.5857,True,False,demo lockbox
+20261014-225847_live_drop1,2026-10-14T22:58:47+00:00,live,synthetic,live_drop1,root,b3fa8ab,True,204744e9a666,963b7cc22472,24,3,2.8357,2.4638,0.1312,-0.132,0.3531,0.5833,False,False,Live sanity check. 95% range resamples trading days; descriptive only.
+20261014-225848_live_drop2,2026-10-14T22:58:48+00:00,live,synthetic,live_drop2,root,b3fa8ab,True,204744e9a666,7cf0224d38c5,30,4,2.4193,2.5906,-0.0708,-0.1768,0.0298,0.5333,False,False,Live sanity check. 95% range resamples trading days; descriptive only.

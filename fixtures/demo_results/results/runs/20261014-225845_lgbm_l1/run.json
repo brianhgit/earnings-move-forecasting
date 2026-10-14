@@ -1,0 +1,13 @@
+{
+  "run_id": "20261014-225845_lgbm_l1",
+  "created_utc": "2026-10-14T22:58:45+00:00",
+  "kind": "dev",
+  "data_source": "synthetic",
+  "name": "lgbm_l1",
+  "author": "root",
+  "git_sha": "b3fa8ab",
+  "git_dirty": true,
+  "config_hash": "204744e9a666",
+  "data_hash": "e17a44b0e359",
+  "note": "L1 loss, locked settings"
+}
