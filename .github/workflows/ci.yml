@@ -1,0 +1,27 @@
+name: checks
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - run: pip install -r requirements.txt && pip install -e .
+      - name: Tests (synthetic data only; never downloads anything)
+        run: pytest -q -rs
+      - name: Functions not implemented yet
+        run: make status
+      - name: Full pipeline on synthetic data (runs once every module is implemented)
+        continue-on-error: true
+        run: python -m btb.demo
+      - name: Nobody committed data
+        run: |
+          if git ls-files data | grep -v -e MANIFEST.json -e README.md; then
+            echo "Raw data must not be committed"; exit 1; fi
