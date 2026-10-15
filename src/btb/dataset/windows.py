@@ -13,7 +13,8 @@ Plan B (only if the timing hand check fails plan A):
   before = session before report_date, after = session after report_date (two days,
   catches the reaction whichever side it fell on, including DMH). This CHANGES what
   we measure (a 2-day move), so it is reported as a different estimand. See
-  docs/PREREGISTRATION.md section 2.
+  docs/PREREGISTRATION.md section 2. A weekend or holiday filing under plan B uses the
+  next session as report_date, then the sessions before and after it.
 
 report_date = the session the announcement belongs to (acceptance day, or the next
 session if accepted on a non-session day). It decides which week (and which live

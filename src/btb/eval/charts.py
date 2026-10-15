@@ -8,7 +8,7 @@ docs/RESULTS_FORMAT.md lists what question each chart answers.
     python -m btb.eval.charts --run <run_id> --data synthetic   # writes results/.../charts/*.html
 
 Colors are fixed per series, never by order: model = blue, baseline = orange,
-shrunk baseline = aqua, actual = ink. (Checked for color-blind separation.)
+shrunk baseline = aqua, actual = gray. (Checked for color-blind separation.)
 """
 
 from __future__ import annotations
@@ -107,11 +107,14 @@ ALL = {
 def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--run", required=True)
-    ap.add_argument("--data", choices=["synthetic", "real"], default="real")
+    ap.add_argument("--data", choices=["synthetic", "real", "fixture"], default="real",
+                    help="fixture = the frozen sample run in fixtures/demo_results")
     a = ap.parse_args(argv)
     _, pred, met = runs.load_run(a.run, a.data)
-    out = runs.results_root(a.data) / "runs" / a.run / "charts"
-    out.mkdir(exist_ok=True)
+    # the fixture folder is read-only sample data, so its charts go under results/demo/
+    out_root = runs.results_root("synthetic" if a.data == "fixture" else a.data)
+    out = out_root / "runs" / a.run / "charts"
+    out.mkdir(parents=True, exist_ok=True)
     for name, fn in ALL.items():
         fn(pred, met).write_html(out / f"{name}.html", include_plotlyjs="cdn")
     ledger_progress(runs.read_ledger(a.data)).write_html(out / "ledger_progress.html", include_plotlyjs="cdn")

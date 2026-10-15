@@ -1,5 +1,11 @@
 """NYSE trading calendar.
 
+Build the calendar once at import time with
+    xc.get_calendar("XNYS", start="2016-01-01")
+(the default start is only ~20 years back, and we need 2016 on). Session labels come back
+as pandas Timestamps; return plain datetime.date values. Close times come back in UTC, so
+convert to America/New_York before comparing with 16:00 / 13:00.
+
 Use exchange_calendars ("XNYS"), never pandas business days: BDay doesn't know
 about holidays (Juneteenth, Good Friday) or 1 pm early closes (July 3, Black Friday,
 Christmas Eve), and getting those wrong silently shifts a move by a day.

@@ -29,6 +29,12 @@ PRICE_FEATURES = ["vol_21d", "vol_63d", "ret_21d", "absret_21d", "vix"]
 def price_features(prices: pd.DataFrame, ticker: str, cutoff: dt.date) -> dict[str, float]:
     """prices: long table (schema "prices"). Returns {name: value} for PRICE_FEATURES.
 
-    Raise btb.dataset.windows.Excluded("price_gap") if fewer than 64 sessions are available.
+    Raise btb.dataset.windows.Excluded("price_gap", detail) if this ticker has fewer than 64
+    rows dated on or before cutoff, or if its last such row isn't the cutoff date itself.
+    Just count rows; you don't need to look for gaps in the middle.
+    If ^VIX has no row on the cutoff date, return NaN for vix (don't raise).
+
+    Types: prices["date"] holds datetime.date values and cutoff may be a date or a
+    Timestamp, so convert both with pd.to_datetime / pd.Timestamp before comparing.
     """
     raise NotImplementedError

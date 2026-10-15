@@ -42,6 +42,9 @@ def features_asof(events_all: pd.DataFrame, prices: pd.DataFrame, universe: pd.D
         last k moves -> hist_median8, hist_mean8, hist_max8, hist_last, plus n_prior
       - price inputs: btb.features.price.price_features(prices, yahoo_ticker, cutoff)
     One row per company: ticker (yahoo_ticker), cik, n_prior, and the 9 inputs.
+    If a company has no counted history, leave its hist_ columns NaN. If price_features
+    raises Excluded (price gap), leave its price inputs NaN. Either way the company stays
+    in the table, and make_forecasts puts it in not_forecast.csv.
     """
     raise NotImplementedError
 
@@ -49,13 +52,17 @@ def features_asof(events_all: pd.DataFrame, prices: pd.DataFrame, universe: pd.D
 def make_forecasts(drop_id: str, data_source: str = "real", inputs: pd.DataFrame | None = None) -> pd.DataFrame:
     """1. If data_source == "real" and results/lockbox/OPENED.json doesn't exist: SystemExit
        (live forecasts only come after the locked test is opened).
-    2. Load history with backtest.load_events(data_source, "lockbox"); train ONE LightGBM and
+    2. Load history with backtest.load_events(data_source, "lockbox") (that's every event up to
+       the end of the locked test, and it's also the events_all you pass to features_asof
+       when inputs is None); train ONE LightGBM and
        ONE shrinkage diagnostic on rows with after_date <= the drop's cutoff.
-    3. inputs: use the given frame, or build it with features_asof from
+    3. inputs: use the given frame (tests pass a slice of the events table with extra
+       columns; just use the columns you need), or build it with features_asof from
        data/interim/prices.parquet and data/interim/universe.parquet.
     4. Forecast only companies with n_prior >= cfg event.min_prior_events and no missing input.
        Fill drop_id, cutoff_date (ISO date), pred_baseline (= hist_median8), pred_model,
-       pred_shrunk, model_fp, config_hash. Round floats to 4 decimals, keep FORECAST_COLS
+       pred_shrunk, model_fp, config_hash (btb.config.config_hash(cfg)). Round floats
+       (not cik or n_prior) to 4 decimals, keep FORECAST_COLS
        in that order, sort by ticker. (Stable formatting = stable SHA-256 fingerprint.)
     5. Write to drop_dir(drop_id, data_source): forecasts.csv (lineterminator="\n", no index),
        not_forecast.csv (ticker, cik, n_prior of skipped companies), model.pkl (lgbm.save).

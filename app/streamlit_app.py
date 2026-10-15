@@ -74,21 +74,32 @@ tab_calls, tab_game = st.tabs(["This week's calls", "Beat the model"])
 
 with tab_calls:
     # TODO (design A, "One stock, two guesses"):
-    #   - read drops_dir(source) / "drop3" / "forecasts.csv"
-    #   - a selectbox of companies reporting this week (default NVDA if it's there)
-    #   - two big side-by-side numbers: "The simple guess ±X%" (orange) and "Our model ±Y%" (blue),
-    #     each with one short line under it ("How much it usually moves" / "Expects a bigger move than usual")
-    #   - a dark bar at the bottom: "Actual move" once the company has reported (from the live scores),
-    #     otherwise "Shows up after they report. Come back and see who was closer."
+    #   - read forecasts.csv from the newest drop folder under drops_dir(source) that has one
+    #     (drop3 in the fake run)
+    #   - a selectbox of the companies in that file, sorted by ticker (default NVDA if it's there,
+    #     otherwise the first one)
+    #   - two big side-by-side numbers: "The simple guess ±X%" (pred_baseline, orange) and
+    #     "Our model ±Y%" (pred_model, blue), rounded to 1 decimal. Under the simple guess:
+    #     "How much it usually moves". Under the model: "Expects a bigger move than usual" if
+    #     pred_model > 1.1 x pred_baseline, "Expects a smaller move than usual" if < 0.9 x,
+    #     otherwise "Expects about the usual move"
+    #   - a dark bar at the bottom: "Actual move ±Z%" if that drop folder has a scores.csv with a
+    #     row for this ticker (y_true), otherwise "Shows up after they report. Come back and see
+    #     who was closer." The fake drop3 has no scores yet, so point it at drop2 once to test the
+    #     actual-move branch
     st.info("TODO: one stock, two guesses")
 
 with tab_game:
     # TODO (design C, "Beat the model"):
     #   - pick a random past report from pred_head (the locked-test predictions)
     #   - show "Can you beat our model?" and one sentence: company, report date
-    #   - the visitor sets a guess (- / + buttons or st.number_input), presses Reveal
-    #   - show four boxes: You, Simple guess, Our model, Actual, then one line saying who was closest
-    #   - keep a running "visitors vs model" tally in st.session_state
+    #   - the visitor sets a guess with st.number_input (0 to 30, step 0.5, in %), presses Reveal
+    #   - show four boxes: You (purple), Simple guess (orange), Our model (blue), Actual (gray),
+    #     then one line saying who was closest (smallest |guess - actual|)
+    #   - keep a running "visitors vs model" tally in st.session_state: visitor wins if strictly
+    #     closer than the model, model wins if strictly closer than the visitor, ties count for nobody
+    #   - a "Play again" button that picks a new report (store the current one in session_state so
+    #     it doesn't change on every rerun)
     st.info("TODO: Beat the model game")
 
 st.caption(f"Run {head_id} · commit {meta['git_sha']} · config {meta['config_hash']} · data {meta['data_hash']}")

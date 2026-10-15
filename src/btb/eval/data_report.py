@@ -1,22 +1,43 @@
 """The data report.
 
-    python -m btb.eval.data_report          -> results/data_report.md + charts
+    python -m btb.eval.data_report --data synthetic    build it now, on fake data
+    python -m btb.eval.data_report --data real         once the real table exists
 
 Turns what the build and the hand checks produced into the tables and charts for
-the "what we kept, what we threw out" part of the final report:
+the "what we kept, what we threw out" part of the final report. It writes one
+markdown file (tables via DataFrame.to_markdown) plus plotly charts as .html:
+    real       -> results/data_report.md and results/data_report/*.html
+    synthetic  -> results/demo/data_report.md and results/demo/data_report/*.html
 
-  1. Kept vs dropped reports, by reason and by year
-     (data/processed/exclusions.csv + results/build_report.json)
-  2. Hand-check results: precision (out of 60) and recall (out of 30), each with a
-     Wilson 95% lower bound (audit/precision_audit.csv, audit/recall_audit.csv)
-  3. Timing sanity check: for each report, |move on our "after" day| divided by
-     |move on the next trading day|. If our windows are right, our day should be
-     much bigger. Show the median of that ratio by year. (Needs a "next day" return
-     column from dataset/build.py.)
+Sections:
+  1. Kept vs dropped reports, by reason and by year.
+       real:      kept = data/processed/events_dev.parquet (+ events_live.parquet; never
+                  open events_lockbox), dropped = data/processed/exclusions.csv, plus the
+                  counts in results/build_report.json
+       synthetic: kept = btb.synthetic.events("demo"); dropped = the rows of
+                  btb.synthetic.measured("demo") whose event_id isn't in events("demo"),
+                  all with reason "insufficient_history"
+     Table: rows = year, columns = kept plus one column per drop reason. Chart: stacked bars.
+  2. Hand-check results, from audit/precision_audit.csv and audit/recall_audit.csv (same
+     columns as the *_template.csv files next to them):
+       precision = rows with correct_window_plan_a == "yes" out of all rows (target 57/60)
+       recall    = rows with in_our_table_yes_no == "yes" AND correct_window_plan_a == "yes"
+                   out of rows with release_found_yes_no == "yes" (target 27/30)
+     Show each as k/n with its wilson_lower(k, n). Same for plan B columns.
+  3. Timing sanity check (real only): for each kept report, compare |ret_stock| with the
+     absolute log return of the stock on the NEXT session after after_date (read the
+     adjusted closes from data/interim/prices.parquet). If our windows are right, our move
+     should usually be the bigger one. Show the median of |ret_stock| / |next-day return|
+     by year, and the share of reports where ours is bigger.
 
-Must also run on the synthetic fixtures (pass --data synthetic) so you can build
-it before the real table exists. No price files go in the output (Yahoo terms):
-counts, ratios and charts only.
+If an input file doesn't exist yet (no audit CSVs, no prices on synthetic), write
+"Not available yet: <which file>" in that section instead of crashing. That's normal
+on synthetic data for sections 2 and 3.
+
+No price levels in the output (Yahoo terms): counts, ratios and charts only.
+
+Done when tests/test_charts.py::test_wilson_lower passes and
+`python -m btb.eval.data_report --data synthetic` writes results/demo/data_report.md.
 """
 
 from __future__ import annotations

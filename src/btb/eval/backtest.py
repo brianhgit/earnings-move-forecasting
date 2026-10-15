@@ -60,6 +60,10 @@ def predict_folds(events: pd.DataFrame, folds: list[splits.Fold], cfg: dict) -> 
       n_train                                           how many training rows that fold used
       model_fp                                          lgbm.fingerprint(model)
 
+    Call the models through their modules: baseline.predict(test),
+    lgbm.fit(train, cfg) / lgbm.predict(model, test, cfg), shrinkage.fit(train) /
+    shrinkage.predict(params, test). n_train is len(train), model_fp is a string.
+    Stack the folds with pd.concat(..., ignore_index=True). Column order doesn't matter.
     Finish with validate(pred, "predictions").
     Done when tests/test_eval.py::test_backtest_* pass.
     """

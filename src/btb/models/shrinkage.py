@@ -9,7 +9,11 @@ version and check the model beats it too:
 
   - global_median = median of move_adj in the TRAINING rows
   - w = the value in {0, 0.05, 0.10, ..., 1.0} that gives the lowest mean absolute
-    error on the TRAINING rows
+    error on the TRAINING rows. Build the grid as np.round(np.linspace(0, 1, 21), 2)
+    so float steps don't drift. On a tie keep the first (smallest) w, which is what
+    np.argmin does.
+  - global_median is a plain np.median of training move_adj.
+  - predict(params, events) returns the formula above as a Series aligned to events.
 
 Both are learned from training rows only. Using test rows to pick w would be leakage.
 

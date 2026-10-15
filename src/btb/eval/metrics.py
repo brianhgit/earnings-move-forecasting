@@ -43,8 +43,8 @@ def summarize(pred: pd.DataFrame, model_col: str = "pred_model", base_col: str =
 
 
 def by_group(pred: pd.DataFrame, col: str) -> pd.DataFrame:
-    """One row per value of `col`, columns:
-    col, n_events, mae_baseline, mae_model, rel_improvement, win_rate."""
+    """One row per value of `col` (groupby(col, observed=True), default sorted order), columns:
+    col, n_events, mae_baseline, mae_model, rel_improvement, win_rate (from summarize)."""
     raise NotImplementedError
 
 
@@ -56,6 +56,7 @@ def vix_bucket(vix: pd.Series) -> pd.Series:
 
 def evaluate(pred: pd.DataFrame, cfg: dict | None = None) -> dict:
     """Build the full metrics dict. Settings come from cfg["eval"] and cfg["project"]["seed"].
+    If cfg is None, load it with btb.config.load() (some callers pass only pred).
 
     Keys (see docs/RESULTS_FORMAT.md for meanings):
       overall                      summarize(pred)
@@ -65,8 +66,11 @@ def evaluate(pred: pd.DataFrame, cfg: dict | None = None) -> dict:
       shrinkage                    only if pred has pred_shrunk: {mae_shrunk, rel_improvement_vs_shrunk,
                                    ci_low, ci_high, model_beats_shrunk (ci_low > 0)}, week clusters,
                                    comparing pred_model against pred_shrunk
-      by_fold, by_sector, by_vix   by_group(...) as a list of dicts (by_vix uses vix_bucket as strings)
-      point_in_time_members_only   only if pred has in_index_at_cutoff: summarize() of those rows
+      by_fold, by_sector, by_vix   by_group(...) as a list of dicts (records). For by_vix, add a
+                                   column vix_bucket(pred["vix"]).astype(str) and group on it, so
+                                   rows come out in alphabetical order; that's expected
+      point_in_time_members_only   only if pred has the in_index_at_cutoff column: summarize() of
+                                   rows where it's True, or None if there are none
       success                      week point >= eval.success.min_point_improvement AND
                                    week ci_low > eval.success.ci_lower_above
       tripwire                     week point > eval.tripwire_improvement

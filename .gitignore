@@ -14,3 +14,7 @@ __pycache__/
 .pytest_cache/
 .streamlit/secrets.toml
 live/*/*/model.pkl
+
+# Local outputs of the synthetic demo (python -m btb.demo); rebuild any time
+results/demo/
+live/demo_drops/

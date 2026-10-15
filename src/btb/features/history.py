@@ -17,6 +17,8 @@ Outputs, using up to the last 8 counted moves (oldest to newest by report_date):
 If nothing counts yet: the four hist_ columns are NaN and n_prior is 0.
 
 Group by CIK, never ticker (tickers change: FB -> META).
+Within a company, sort by report_date. The after_date rule alone decides what counts
+(a report's own after_date is always after its cutoff, so it never counts itself).
 Run it on ALL measured reports from 2017 on, before dropping early rows, or the
 2019 reports won't see their 2017-2018 history.
 

@@ -10,7 +10,14 @@ could mistake luck for a signal. So we resample whole report WEEKS:
   4. Repeat n times. The 95% range is the 2.5th to 97.5th percentile of those values.
 
 Use numpy.random.default_rng(seed) so the same inputs give the same range every time.
-Hint: summing each cluster's absolute errors once up front makes 2,000 resamples fast.
+
+To match the numbers in fixtures/demo_results exactly, do it this way:
+  codes, _ = pd.factorize(pred[cluster])        # clusters in order of first appearance
+  sum the model and baseline absolute errors per cluster (np.bincount with weights)
+  draws = rng.integers(0, k, size=(n, k))       # k = number of clusters
+  boot = 1 - sum_model[draws].sum(axis=1) / sum_base[draws].sum(axis=1)
+  ci_low, ci_high = np.quantile(boot, [(1 - ci) / 2, 1 - (1 - ci) / 2])
+The config says cluster: week, which means the "week_id" column.
 
 Done when tests/test_eval.py::test_bootstrap_* and test_week_clusters_* pass.
 """

@@ -39,7 +39,10 @@ def eligible(drop_id: str, measured: pd.DataFrame, data_source: str = "real") ->
        reason "drop_void_late".
     3. Otherwise give each row a reason, checked in this order:
          "outside_window"          report_date not inside the drop's window
-         "reported_before_freeze"  acceptance time (convert ET to UTC) <= frozen_utc
+         "reported_before_freeze"  acceptance time <= frozen_utc. frozen_utc in FREEZE.json is
+                                   an ISO string with an offset; accept_ts_et is Eastern and
+                                   may be naive, so tz_localize("America/New_York") first,
+                                   then tz_convert("UTC") and compare
          "no_forecast_row"         cik not in forecasts.csv
        Rows with no reason are scored: merge in pred_baseline, pred_model, pred_shrunk by cik.
     Return (scored, unscored) where unscored has a "reason" column.
@@ -51,7 +54,10 @@ def score(drop_id: str, measured: pd.DataFrame, data_source: str = "real") -> di
     """eligible() -> write unscored.csv -> if anything scored, build the "predictions" table
     (fold = drop_id, week_id = the report_date as YYYY-MM-DD so the bootstrap resamples
     trading days, not weeks), write scores.csv, run metrics.evaluate, add
-    met["note"] saying the result is descriptive, and runs.write_run(kind="live").
+    met["note"] saying the result is descriptive, and
+    runs.write_run(name=f"live_{drop_id}", kind="live", data_source=data_source,
+                   predictions=pred, metrics=met, data_hash=backtest.data_hash(scored),
+                   note=met["note"]).
     Return the metrics dict, or None if nothing was scored.
     """
     raise NotImplementedError
