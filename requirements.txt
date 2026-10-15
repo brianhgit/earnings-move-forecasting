@@ -1,5 +1,5 @@
 # Exact versions. Everyone installs these so reruns match bit for bit.
-# Tested on Python 3.13; 3.11 and 3.12 should work. Change a pin only in a PR Brian merges.
+# Tested on Python 3.13; 3.11 and 3.12 should work. Change a pin only in a reviewed PR.
 numpy==2.5.3
 pandas==3.0.5
 pyarrow==26.0.0

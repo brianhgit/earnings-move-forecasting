@@ -88,7 +88,7 @@ def ledger_progress(ledger: pd.DataFrame) -> go.Figure:
 
 def stock_history(pred: pd.DataFrame, ticker: str) -> go.Figure:
     """For one ticker over time: gray bars = actual move, orange line+markers = simple guess,
-    blue line+markers = model. Used by the app's "Next up" tab."""
+    blue line+markers = model. Can be used in the app's "This week's calls" tab."""
     raise NotImplementedError
 
 

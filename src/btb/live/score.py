@@ -68,9 +68,15 @@ def main(argv=None):
     ap.add_argument("--drop", required=True)
     ap.add_argument("--data", choices=["synthetic", "real"], default="real")
     a = ap.parse_args(argv)
-    from btb.config import PROCESSED
+    if a.data == "synthetic":
+        from btb import synthetic
 
-    measured = pd.read_parquet(PROCESSED / "events_live.parquet")
+        ev = synthetic.events("demo")
+        measured = ev[ev["split"] == "live"].reset_index(drop=True)
+    else:
+        from btb.config import PROCESSED
+
+        measured = pd.read_parquet(PROCESSED / "events_live.parquet")
     met = score(a.drop, measured, a.data)
     if met:
         o = met["overall"]
