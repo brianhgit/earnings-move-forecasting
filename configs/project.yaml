@@ -13,7 +13,7 @@ universe:
   share_class_keep: [GOOGL, FOXA, NWSA, BRK-B, BF-B]
 
 data:
-  prices_snapshot: null           # set by Brian after the full price download (folder name YYYYMMDD)
+  prices_snapshot: null           # recorded after the full price download (folder name YYYYMMDD)
   edgar_snapshot: null             # same, for data/raw/edgar/
 
 dates:

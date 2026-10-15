@@ -32,8 +32,8 @@ load_long(snapshot):
   - Return one long table: date (datetime.date), ticker (str), adj_close, close, volume
     (floats), sorted by ticker then date, dropping rows where adj_close is NaN. It must
     pass validate(df, "prices").
-  - Which snapshot is "the" snapshot is set once by Brian in configs/project.yaml under
-    data.prices_snapshot after the full download. Don't edit the config yourself; pass the
+  - Which snapshot is "the" snapshot is recorded once in configs/project.yaml under
+    data.prices_snapshot after the full download, in a separate reviewed change. Until then, pass the
     folder name with --load.
 
 Data checks (post results in the channel after the full download):
