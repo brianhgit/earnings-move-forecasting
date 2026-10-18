@@ -32,12 +32,21 @@ from btb.config import features, load  # noqa: F401  (you'll need both)
 
 def fit(train: pd.DataFrame, cfg: dict | None = None) -> lgb.LGBMRegressor:
     """Train on every row of `train` (target column: move_adj). Return the fitted model."""
-    raise NotImplementedError
+    cfg = cfg if cfg is not None else load()
+    model = lgb.LGBMRegressor(**cfg["model"]["params"], random_state=cfg["project"]["seed"])
+
+    X = train[features(cfg)]
+    y = train["move_adj"]
+    model.fit(X,y)
+    return model
 
 
 def predict(model: lgb.LGBMRegressor, events: pd.DataFrame, cfg: dict | None = None) -> pd.Series:
     """One non-negative prediction per row, same index as events."""
-    raise NotImplementedError
+    cfg = cfg if cfg is not None else load()
+    X = events[features(cfg)]
+    preds = pd.Series(model.predict(X), index=events.index)
+    return preds.clip(lower=0)
 
 
 # ---------- plumbing (done) ----------
