@@ -64,104 +64,19 @@ Backup if the API is slow: https://www.sec.gov/Archives/edgar/daily-index/bulkda
 from __future__ import annotations
 
 import argparse
-import json
-import re
-import time
-from datetime import date
-from pathlib import Path
 
-import pandas as pd
-import requests
-
-from btb.config import INTERIM, RAW, load
-from btb.schema import validate
-
-USER_AGENT = "Daniel Lee danhlee@ucdavis.edu"
-ACCEPTANCE_TZ = "UTC"   # verified 2026-10-18 on NFLX/TSLA after-close reports, see docs/DECISIONS.md
+USER_AGENT = "Your Name your.email@ucdavis.edu"   # change to your real name and email
+ACCEPTANCE_TZ = None   # "America/New_York" or "UTC", set after the timezone check
 TEST_CIKS = [1065280, 1318605, 320193]   # NFLX, TSLA, AAPL
-
-BASE_URL = "https://data.sec.gov/submissions"
-SLEEP_S = 0.15   # keeps us under the SEC's 10 requests per second
 
 
 def download(snapshot: str | None = None, ciks: list[int] | None = None) -> None:
-    snapshot = snapshot or date.today().strftime("%Y%m%d")
-    out = RAW / "edgar" / snapshot
-    if out.exists() and any(out.iterdir()):
-        raise FileExistsError(f"{out} already has files. Snapshots are never overwritten; use a new dated folder.")
-    if ciks is None:
-        ciks = pd.read_parquet(INTERIM / "universe.parquet")["cik"].astype(int).unique().tolist()
-    out.mkdir(parents=True, exist_ok=True)
-
-    session = requests.Session()
-    session.headers["User-Agent"] = USER_AGENT
-
-    def fetch(name: str) -> dict:
-        r = session.get(f"{BASE_URL}/{name}", timeout=30)
-        time.sleep(SLEEP_S)
-        r.raise_for_status()
-        with open(out / name, "xb") as f:   # "x": fail rather than overwrite
-            f.write(r.content)
-        return r.json()
-
-    for n, cik in enumerate(ciks, 1):
-        main = fetch(f"CIK{int(cik):010d}.json")
-        for page in main.get("filings", {}).get("files", []):
-            fetch(page["name"])
-        if n % 50 == 0:
-            print(f"{n}/{len(ciks)} companies downloaded")
-
-
-def _to_eastern(raw: pd.Series) -> pd.Series:
-    """acceptanceDateTime strings -> naive America/New_York timestamps, per ACCEPTANCE_TZ."""
-    ts = pd.to_datetime(raw, utc=True, format="ISO8601")   # parses the trailing Z as UTC
-    if ACCEPTANCE_TZ == "America/New_York":
-        ts = ts.dt.tz_localize(None)                        # the Z is wrong: keep the wall-clock time
-    elif ACCEPTANCE_TZ == "UTC":
-        ts = ts.dt.tz_convert("America/New_York").dt.tz_localize(None)
-    else:
-        raise ValueError(f"ACCEPTANCE_TZ must be 'America/New_York' or 'UTC', got {ACCEPTANCE_TZ!r}")
-    return ts.astype("datetime64[us]")
-
-
-def _has_item(items: str, item: str) -> bool:
-    return item in [s.strip() for s in (items or "").split(",")]
+    raise NotImplementedError
 
 
 def parse_filings(snapshot_dir) -> "pd.DataFrame":  # noqa: F821
     """Return the "filings" table from one raw snapshot folder. Rules in the module docstring."""
-    cfg = load()
-    paths = sorted(Path(snapshot_dir).glob("CIK*.json"))
-    if not paths:
-        raise FileNotFoundError(f"no CIK*.json files in {snapshot_dir}")
-
-    frames = []
-    for path in paths:
-        data = json.loads(path.read_text())
-        # Main file: columns under filings.recent. Older -submissions-### pages: at the top level.
-        cols = data["filings"]["recent"] if "filings" in data else data
-        forms = cols.get("form", [])
-        frames.append(pd.DataFrame({
-            "cik": int(re.match(r"CIK(\d{10})", path.name).group(1)),
-            "accession": cols.get("accessionNumber", []),
-            "form": forms,
-            "items": cols.get("items", [""] * len(forms)),
-            "acceptanceDateTime": cols.get("acceptanceDateTime", []),
-        }))
-    df = pd.concat(frames, ignore_index=True)
-
-    keep = df["form"].isin(cfg["event"]["filing_forms"]) & df["items"].map(
-        lambda s: _has_item(s, cfg["event"]["required_item"]))
-    df = df[keep].drop_duplicates("accession").copy()
-    df["accept_ts_et"] = _to_eastern(df["acceptanceDateTime"])
-    df = df[df["accept_ts_et"] >= pd.Timestamp(cfg["dates"]["edgar_start"])]
-
-    df = (df[["cik", "accession", "form", "items", "accept_ts_et"]]
-          .astype({"cik": "int64"})
-          .sort_values(["cik", "accept_ts_et"], kind="stable")
-          .reset_index(drop=True))
-    validate(df, "filings")
-    return df
+    raise NotImplementedError
 
 
 def main() -> None:
