@@ -14,8 +14,9 @@ What to build:
 
 Downloading:
   - For each CIK, GET https://data.sec.gov/submissions/CIK{cik:010d}.json
-    with header {"User-Agent": USER_AGENT}. Put your real name and email in USER_AGENT
-    below; the SEC blocks requests without one. No API key needed.
+    with header {"User-Agent": USER_AGENT}. Set the SEC_USER_AGENT environment variable
+    to your real name and email before downloading (USER_AGENT below reads it; names are
+    not committed); the SEC blocks requests without one. No API key needed.
   - Stay under 10 requests per second: time.sleep(0.15) after every request.
   - That JSON only holds the most recent ~1000 filings, under json["filings"]["recent"].
     Older filings are listed in json["filings"]["files"], a list like
@@ -65,6 +66,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import time
 from datetime import date
@@ -76,7 +78,7 @@ import requests
 from btb.config import INTERIM, RAW, load
 from btb.schema import validate
 
-USER_AGENT = "Daniel Lee danhlee@ucdavis.edu"
+USER_AGENT = os.environ.get("SEC_USER_AGENT", "Your Name your.email@ucdavis.edu")
 ACCEPTANCE_TZ = "UTC"   # verified 2026-10-18 on NFLX/TSLA after-close reports, see docs/DECISIONS.md
 TEST_CIKS = [1065280, 1318605, 320193]   # NFLX, TSLA, AAPL
 
