@@ -20,7 +20,7 @@ def predict(events: pd.DataFrame) -> pd.Series:
     excluded upstream (fewer than 8 prior reports), and silently filling them in
     would mean the two predictors get scored on different reports.
     """
-    # how to pull one column out of a dataframe by name?
+  
     col = events["hist_median8"]
     
     if col.isna().any():
