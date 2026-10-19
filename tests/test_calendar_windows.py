@@ -8,7 +8,7 @@ import datetime as dt
 
 import pytest
 
-from btb.dataset import calendar as cal
+from btb.dataset import trading_calendar as cal
 from btb.dataset import windows as W
 from conftest import call_or_skip
 

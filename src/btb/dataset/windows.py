@@ -27,7 +27,19 @@ Every feature must use data from cutoff_date or earlier.
 from __future__ import annotations
 
 import datetime as dt
+
 from dataclasses import dataclass
+from zoneinfo import ZoneInfo
+
+from btb.dataset.trading_calendar import (
+    is_session,
+    next_session,
+    prev_session,
+    session_on_or_before,
+    close_time_et,
+)
+
+eastern = ZoneInfo("America/New_York")
 
 
 @dataclass(frozen=True)
@@ -47,9 +59,66 @@ class Excluded(Exception):
 
 
 def assign_window(accept_ts_et: dt.datetime, plan: str = "A") -> Window:
-    """accept_ts_et is a naive or tz-aware America/New_York timestamp."""
-    raise NotImplementedError
+    if plan not in ("A", "B"):
+        raise ValueError(f"Unknown plan: {plan!r}")
+
+    if accept_ts_et.tzinfo is None:
+        local = accept_ts_et.replace(tzinfo=eastern)
+    else:
+        local = accept_ts_et.astimezone(eastern)
+
+    acceptance_date = local.date()
+
+    if is_session(acceptance_date):
+        report_date = acceptance_date
+        non_session = False
+    else:
+        report_date = next_session(acceptance_date)
+        non_session = True
+
+    if plan == "B":
+        return Window(
+            timing="ANY",
+            report_date=report_date,
+            before_date=prev_session(report_date),
+            after_date=next_session(report_date),
+        )
+
+    if non_session:
+        return Window(
+            timing="BMO",
+            report_date=report_date,
+            before_date=prev_session(report_date),
+            after_date=report_date,
+        )
+
+    accepted_time = local.time().replace(tzinfo=None)
+    market_open = dt.time(9, 30)
+    market_close = close_time_et(report_date)
+
+    if accepted_time < market_open:
+        return Window(
+            timing="BMO",
+            report_date=report_date,
+            before_date=prev_session(report_date),
+            after_date=report_date,
+        )
+
+    if accepted_time >= market_close:
+        return Window(
+            timing="AMC",
+            report_date=report_date,
+            before_date=report_date,
+            after_date=next_session(report_date),
+        )
+
+    raise Excluded(
+        "during_market_hours",
+        f"Acceptance at {local.isoformat()} occurred during market hours.",
+    )
 
 
 def cutoff_for(report_date: dt.date) -> dt.date:
-    raise NotImplementedError
+    monday = report_date - dt.timedelta(days=report_date.weekday())
+    prior_friday = monday - dt.timedelta(days=3)
+    return session_on_or_before(prior_friday)
