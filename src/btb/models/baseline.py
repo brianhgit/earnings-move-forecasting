@@ -20,4 +20,10 @@ def predict(events: pd.DataFrame) -> pd.Series:
     excluded upstream (fewer than 8 prior reports), and silently filling them in
     would mean the two predictors get scored on different reports.
     """
-    raise NotImplementedError
+  
+    col = events["hist_median8"]
+    
+    if col.isna().any():
+        raise ValueError("hist_median8 is missing for some reports; they should have been excluded upstream")
+    return col
+

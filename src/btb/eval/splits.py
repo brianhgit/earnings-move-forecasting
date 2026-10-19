@@ -52,7 +52,40 @@ def quarter_label(d: pd.Timestamp) -> str:
 
 
 def walk_forward(events: pd.DataFrame, mode: str = "dev", cfg: dict | None = None) -> list[Fold]:
-    raise NotImplementedError
+    cfg = cfg if cfg is not None else load()
+    dates = cfg["dates"]
+
+    if mode == "dev":
+        if (events["split"] == "lockbox").any():
+            raise RuntimeError("dev mode was handed lockbox rows")
+        start, end = dates["dev_folds_start"], dates["dev_end"]
+        pool_splits = ["train_only", "dev"]
+    elif mode == "lockbox":
+        start, end = dates["lockbox_start"], dates["lockbox_end"]
+        pool_splits = ["train_only", "dev", "lockbox"]
+    else:
+        raise ValueError(f"unknown mode: {mode}")
+
+    pool = events[events["split"].isin(pool_splits)]
+
+    folds = []
+    for q_start in pd.date_range(start, end, freq="QS"):
+        q_end = q_start + pd.offsets.QuarterEnd(0)
+
+        test = pool[(pool["report_date"] >= q_start) & (pool["report_date"] <= q_end)]
+        if len(test) == 0:
+            continue
+
+        train_until = test["cutoff_date"].min()
+        train = pool[pool["after_date"] <= train_until]
+
+        folds.append(Fold(
+            label=quarter_label(q_start),
+            train_idx=train.index,
+            test_idx=test.index,
+            train_until=train_until,
+        ))
+    return folds
 
 
 def check_no_leak(events: pd.DataFrame, folds: list[Fold]) -> None:
@@ -62,4 +95,14 @@ def check_no_leak(events: pd.DataFrame, folds: list[Fold]) -> None:
     Skip the date check for a fold with no test rows. Return None if everything is fine.
     backtest.main() calls this on every run (you don't need to call it in predict_folds).
     """
-    raise NotImplementedError
+    for f in folds:
+        overlap = f.train_idx.intersection(f.test_idx)
+        assert len(overlap) == 0, f"{f.label}: {len(overlap)} rows in both train and test"
+
+        if len(f.test_idx) == 0:
+            continue
+
+        earliest_cutoff = events.loc[f.test_idx, "cutoff_date"].min()
+        latest_train_after = events.loc[f.train_idx, "after_date"].max()
+        ok = latest_train_after <= earliest_cutoff
+        assert ok, f"{f.label}: training row's move ends after the test cutoff"

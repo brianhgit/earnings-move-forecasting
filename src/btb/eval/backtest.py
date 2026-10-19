@@ -67,7 +67,27 @@ def predict_folds(events: pd.DataFrame, folds: list[splits.Fold], cfg: dict) -> 
     Finish with validate(pred, "predictions").
     Done when tests/test_eval.py::test_backtest_* pass.
     """
-    raise NotImplementedError
+    parts = []
+    for f in folds:
+        train = events.loc[f.train_idx]
+        test = events.loc[f.test_idx]
+
+        model = lgbm.fit(train, cfg)
+        params = shrinkage.fit(train)
+
+        out = test[["event_id", "ticker", "sector", "report_date", "week_id", "vix", "in_index_at_cutoff"]].copy()
+        out["fold"] = f.label
+        out["y_true"] = test["move_adj"]
+        out["pred_baseline"] = baseline.predict(test)
+        out["pred_model"] = lgbm.predict(model, test, cfg)
+        out["pred_shrunk"] = shrinkage.predict(params, test)
+        out["n_train"] = len(train)
+        out["model_fp"] = lgbm.fingerprint(model)
+        parts.append(out)
+
+    pred = pd.concat(parts, ignore_index=True)
+    validate(pred, "predictions")
+    return pred
 
 
 def main(argv=None):

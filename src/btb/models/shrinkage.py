@@ -23,12 +23,27 @@ Done when tests/test_models.py::test_shrinkage_* passes.
 from __future__ import annotations
 
 import pandas as pd
+import numpy as np
 
 
 def fit(train: pd.DataFrame) -> dict:
     """Return {"w": float, "global_median": float}."""
-    raise NotImplementedError
+    y = train["move_adj"]
+    hist = train["hist_median8"]
+    global_median = float(np.median(y))
+
+    grid = np.round(np.linspace(0, 1, 21), 2)
+    errors = []
+    for w in grid:
+        pred = w * hist + (1 - w) * global_median
+        mae = np.abs(y - pred).mean()
+        errors.append(mae)
+    best_w = grid[np.argmin(errors)]
+
+    return {"w": float(best_w), "global_median": float(global_median)}
 
 
 def predict(params: dict, events: pd.DataFrame) -> pd.Series:
-    raise NotImplementedError
+    w = params["w"]
+    g = params["global_median"]
+    return w * events["hist_median8"] + (1 - w) * g
