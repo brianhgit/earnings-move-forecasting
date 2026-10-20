@@ -67,28 +67,279 @@ looking at its moves is not.
 Done when tests/test_build.py passes.
 """
 
+
 from __future__ import annotations
-
+ 
+import datetime as dt
+import json
+from pathlib import Path
+ 
+import numpy as np
 import pandas as pd
-
-from btb.config import INTERIM, PROCESSED, RESULTS, load  # noqa: F401
-from btb.dataset import windows  # noqa: F401
-from btb.features import history, price  # noqa: F401  (call them as history.add_history_features / price.price_features)
-from btb.schema import validate  # noqa: F401
-
-
-def build_events(universe: pd.DataFrame, filings: pd.DataFrame, prices: pd.DataFrame,
-                 membership: pd.DataFrame | None = None, plan: str | None = None,
-                 cfg: dict | None = None) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Steps 1 to 10 above. plan defaults to cfg["event"]["timing_plan"].
-    Returns (events, exclusions). Exclusion columns: cik, ticker, accession, accept_ts_et, reason, detail."""
-    raise NotImplementedError
-
-
+ 
+from btb import schema
+from btb.features import price, history
+from btb.dataset import windows
+ 
+#constants
+DEDUPE_DAYS = 45                         # cfg event.dedupe_days
+MIN_REPORT_DATE = pd.Timestamp("2019-01-01")
+MIN_PRIOR = 8
+TRAIN_END = pd.Timestamp("2021-12-31")   # before 2022  -> train_only
+DEV_END = pd.Timestamp("2024-12-31")     # through 2024 -> dev
+LOCKBOX_END = pd.Timestamp("2026-09-30") # through Sep 30 2026 -> lockbox, after -> live
+SPLITS = ("train_only", "dev", "lockbox", "live")
+ 
+EXCLUSION_COLS = ["cik", "ticker", "accession", "accept_ts_et", "reason", "detail"]
+ 
+# ADAPT: paths used by build() only
+ROOT = Path(".")
+RAW = ROOT / "data" / "raw"
+PROCESSED = ROOT / "data" / "processed"
+RESULTS = ROOT / "results"
+ 
+ 
+#helpers
+def _has_item_202(items) -> bool:
+    """True if the filing's items include exactly "2.02" (string or list-like)."""
+    if items is None:
+        return False
+    if isinstance(items, float) and pd.isna(items):
+        return False
+    if isinstance(items, str):
+        parts = items.replace(";", ",").replace(" ", ",").split(",")
+    else:
+        parts = [str(i) for i in items]
+    return "2.02" in [p.strip() for p in parts]
+ 
+ 
+def _price_lookup(prices: pd.DataFrame) -> dict:
+    """{(ticker, date): adj_close}. ADAPT if the real prices table is shaped differently."""
+    days = pd.to_datetime(prices["date"]).dt.date
+    return dict(zip(zip(prices["ticker"], days), prices["adj_close"]))
+ 
+ 
+def _get_price(lookup: dict, ticker: str, day: dt.date):
+    v = lookup.get((ticker, day))
+    return None if v is None or pd.isna(v) else float(v)
+ 
+ 
+def _week_id(day: dt.date) -> str:
+    iso = day.isocalendar()
+    return f"{iso.year}-W{iso.week:02d}"
+ 
+ 
+def _in_index(membership: pd.DataFrame, ticker: str, cutoff: pd.Timestamp) -> bool:
+    m = membership[membership["ticker"] == ticker]
+    ok = (m["start"] <= cutoff) & (m["end"].isna() | (m["end"] >= cutoff))
+    return bool(ok.any())
+ 
+ 
+def _split_for(day: pd.Timestamp) -> str:
+    if day <= TRAIN_END:
+        return "train_only"
+    if day <= DEV_END:
+        return "dev"
+    if day <= LOCKBOX_END:
+        return "lockbox"
+    return "live"
+ 
+ 
+#logic
+def build_events(
+    universe: pd.DataFrame,
+    filings: pd.DataFrame,
+    prices: pd.DataFrame,
+    membership: pd.DataFrame | None = None,
+    plan: str = "A",
+    dedupe_days: int = DEDUPE_DAYS,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    exclusions: list[dict] = []
+ 
+    def exclude(row, reason: str, detail: str = "") -> None:
+        exclusions.append(
+            {
+                "cik": row["cik"],
+                "ticker": row["ticker"],
+                "accession": row["accession"],
+                "accept_ts_et": row["accept_ts_et"],
+                "reason": reason,
+                "detail": detail,
+            }
+        )
+ 
+    # STEP 1: 8-K (not 8-K/A) with item 2.02, CIK in the universe. Else: ignored silently.
+    uni = universe[["cik", "ticker", "yahoo_ticker", "sector"]].drop_duplicates("cik")
+    f = filings[filings["form"] == "8-K"]
+    f = f[f["items"].map(_has_item_202)]
+    f = f.drop(columns=["ticker", "yahoo_ticker", "sector"], errors="ignore")
+    f = f.merge(uni, on="cik", how="inner")
+    f["accept_ts_et"] = pd.to_datetime(f["accept_ts_et"])
+    f = f.sort_values(["cik", "accept_ts_et", "accession"], kind="stable")
+ 
+    # STEP 2: duplicates, per company, in time order, measured against the last KEPT filing.
+    kept_rows: list[dict] = []
+    last_kept_ts: dict = {}
+    for row in f.to_dict("records"):
+        last = last_kept_ts.get(row["cik"])
+        if last is not None and (row["accept_ts_et"] - last).days < dedupe_days:
+            days = (row["accept_ts_et"] - last).days
+            exclude(row, "duplicate_filing", f"{days} days after previous")
+            continue
+        last_kept_ts[row["cik"]] = row["accept_ts_et"]   # kept here, even if a later step drops it
+        kept_rows.append(row)
+ 
+    # STEPS 3-5: window, prices, returns
+    lookup = _price_lookup(prices)
+    events_rows: list[dict] = []
+    for row in kept_rows:
+        # STEP 3
+        try:
+            w = windows.assign_window(row["accept_ts_et"], plan)
+        except windows.Excluded as e:
+            exclude(row, e.reason, e.detail)
+            continue
+ 
+        # STEP 4
+        t = row["yahoo_ticker"]
+        p_b = _get_price(lookup, t, w.before_date)
+        p_a = _get_price(lookup, t, w.after_date)
+        s_b = _get_price(lookup, "SPY", w.before_date)
+        s_a = _get_price(lookup, "SPY", w.after_date)
+        if None in (p_b, p_a, s_b, s_a):
+            exclude(row, "missing_price", f"{t} {w.before_date}..{w.after_date}")
+            continue
+ 
+        # STEP 5
+        ret_stock = float(np.log(p_a / p_b))
+        ret_spy = float(np.log(s_a / s_b))
+        events_rows.append(
+            {
+                **row,
+                "timing": w.timing,
+                "report_date": w.report_date,
+                "before_date": w.before_date,
+                "after_date": w.after_date,
+                "ret_stock": ret_stock,
+                "ret_spy": ret_spy,
+                "move_adj": 100 * abs(ret_stock - ret_spy),
+                "move_raw": 100 * abs(ret_stock),
+                "cutoff_date": windows.cutoff_for(w.report_date),
+                "week_id": _week_id(w.report_date),
+            }
+        )
+ 
+    df = pd.DataFrame(events_rows)
+    if not df.empty:
+        for c in ("report_date", "before_date", "after_date", "cutoff_date"):
+            df[c] = pd.to_datetime(df[c])
+ 
+        # STEP 6: history features on every survivor (2017 on), before any date filter.
+        df = history.add_history_features(df)
+ 
+        # STEP 7: price features, all years. Excluded("price_gap") -> exclusions.
+        keep_idx, feats = [], []
+        for idx, row in df.iterrows():
+            try:
+                feats.append(
+                    price.price_features(prices, row["yahoo_ticker"], row["cutoff_date"].date())
+                )
+                keep_idx.append(idx)
+            except windows.Excluded as e:
+                exclude(row, e.reason, e.detail)
+        df = df.loc[keep_idx].copy()
+        if not df.empty:
+            df = df.join(pd.DataFrame(feats, index=keep_idx))
+ 
+    if not df.empty:
+        # STEP 8: in_index_at_cutoff (sensitivity column only)
+        if membership is None:
+            df["in_index_at_cutoff"] = True
+        else:
+            mem = membership.copy()
+            mem["start"] = pd.to_datetime(mem["start"])
+            mem["end"] = pd.to_datetime(mem["end"])
+            df["in_index_at_cutoff"] = [
+                _in_index(mem, tk, co) for tk, co in zip(df["ticker"], df["cutoff_date"])
+            ]
+ 
+        # STEP 9: silent drop before 2019, then insufficient history, then split.
+        df = df[df["report_date"] >= MIN_REPORT_DATE].copy()
+        short = df["n_prior"] < MIN_PRIOR
+        for _, row in df[short].iterrows():
+            exclude(row, "insufficient_history", f"n_prior={int(row['n_prior'])}")
+        df = df[~short].copy()
+        df["split"] = df["report_date"].map(_split_for)
+ 
+        # STEP 10: final columns, types, order
+        df["event_id"] = df["cik"].astype(str) + "-" + df["accession"].astype(str)
+        df["n_prior"] = df["n_prior"].astype(int)
+        df = df.sort_values(["report_date", "ticker"], kind="stable").reset_index(drop=True)
+ 
+    # Keep exactly the schema's columns, in the schema's order (drops accession, form,
+    # items, yahoo_ticker; also gives an empty frame the right columns).
+    df = df.reindex(columns=list(schema.TABLES["events"]))
+    exclusions_df = pd.DataFrame(exclusions, columns=EXCLUSION_COLS)
+    schema.validate(df, "events")
+    schema.validate(exclusions_df, "exclusions")
+    return df, exclusions_df
+ 
+ 
+# ---------------------------------------------------------------- report + files
+def _build_report(events: pd.DataFrame, exclusions: pd.DataFrame) -> dict:
+    kept_by_split = {s: 0 for s in SPLITS}
+    kept_by_year: dict = {}
+    if not events.empty:
+        for s, n in events["split"].value_counts().items():
+            kept_by_split[s] = int(n)
+        for y, n in events["report_date"].dt.year.value_counts().sort_index().items():
+            kept_by_year[str(int(y))] = int(n)
+ 
+    dropped_by_reason: dict = {}
+    by_reason_year: list = []
+    if not exclusions.empty:
+        for r, n in exclusions["reason"].value_counts().items():
+            dropped_by_reason[r] = int(n)
+        years = pd.to_datetime(exclusions["accept_ts_et"], utc=True).dt.year
+        g = exclusions.assign(year=years).groupby(["reason", "year"]).size()
+        by_reason_year = [
+            {"reason": r, "year": int(y), "n": int(n)} for (r, y), n in g.items()
+        ]
+ 
+    return {
+        "kept_by_split": kept_by_split,
+        "kept_by_year": kept_by_year,
+        "dropped_by_reason": dropped_by_reason,
+        "dropped_by_reason_year": by_reason_year,
+    }
+ 
+ 
 def build() -> None:
-    """Read data/interim/{universe,filings,prices}.parquet, call build_events, write the outputs listed above."""
-    raise NotImplementedError
-
-
+    # ADAPT: file names/formats of the real inputs
+    universe = pd.read_csv(RAW / "universe.csv")   # cik must load as int
+    filings = pd.read_parquet(RAW / "filings.parquet")
+    prices = pd.read_parquet(RAW / "prices.parquet")
+    mem_path = RAW / "membership.csv"
+    membership = pd.read_csv(mem_path) if mem_path.exists() else None
+ 
+    events, exclusions = build_events(universe, filings, prices, membership)
+ 
+    PROCESSED.mkdir(parents=True, exist_ok=True)
+    RESULTS.mkdir(parents=True, exist_ok=True)
+    events[events["split"].isin(["train_only", "dev"])].to_parquet(
+        PROCESSED / "events_dev.parquet", index=False
+    )
+    events[events["split"] == "lockbox"].to_parquet(
+        PROCESSED / "events_lockbox.parquet", index=False
+    )
+    events[events["split"] == "live"].to_parquet(
+        PROCESSED / "events_live.parquet", index=False
+    )
+    exclusions.to_csv(PROCESSED / "exclusions.csv", index=False)
+    (RESULTS / "build_report.json").write_text(
+        json.dumps(_build_report(events, exclusions), indent=2)
+    )
+ 
+ 
 if __name__ == "__main__":
     build()
