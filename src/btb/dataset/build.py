@@ -72,31 +72,24 @@ from __future__ import annotations
  
 import datetime as dt
 import json
-from pathlib import Path
+#from pathlib import Path
  
 import numpy as np
 import pandas as pd
  
 from btb import schema
+from btb.config import INTERIM, PROCESSED, RESULTS, load
 from btb.features import price, history
 from btb.dataset import windows
  
-#constants
-DEDUPE_DAYS = 45                         # cfg event.dedupe_days
+#constants                         # cfg event.dedupe_days
 MIN_REPORT_DATE = pd.Timestamp("2019-01-01")
-MIN_PRIOR = 8
 TRAIN_END = pd.Timestamp("2021-12-31")   # before 2022  -> train_only
 DEV_END = pd.Timestamp("2024-12-31")     # through 2024 -> dev
 LOCKBOX_END = pd.Timestamp("2026-09-30") # through Sep 30 2026 -> lockbox, after -> live
 SPLITS = ("train_only", "dev", "lockbox", "live")
  
 EXCLUSION_COLS = ["cik", "ticker", "accession", "accept_ts_et", "reason", "detail"]
- 
-# ADAPT: paths used by build() only
-ROOT = Path(".")
-RAW = ROOT / "data" / "raw"
-PROCESSED = ROOT / "data" / "processed"
-RESULTS = ROOT / "results"
  
  
 #helpers
@@ -151,9 +144,13 @@ def build_events(
     filings: pd.DataFrame,
     prices: pd.DataFrame,
     membership: pd.DataFrame | None = None,
-    plan: str = "A",
-    dedupe_days: int = DEDUPE_DAYS,
+    plan: str | None = None,
+    cfg: dict | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
+    cfg = cfg if cfg is not None else load()
+    plan = plan if plan is not None else cfg["event"]["timing_plan"]
+    dedupe_days = cfg["event"]["dedupe_days"]
+    min_prior = cfg["event"]["min_prior_events"]
     exclusions: list[dict] = []
  
     def exclude(row, reason: str, detail: str = "") -> None:
@@ -265,7 +262,7 @@ def build_events(
  
         # STEP 9: silent drop before 2019, then insufficient history, then split.
         df = df[df["report_date"] >= MIN_REPORT_DATE].copy()
-        short = df["n_prior"] < MIN_PRIOR
+        short = df["n_prior"] < min_prior
         for _, row in df[short].iterrows():
             exclude(row, "insufficient_history", f"n_prior={int(row['n_prior'])}")
         df = df[~short].copy()
@@ -315,14 +312,14 @@ def _build_report(events: pd.DataFrame, exclusions: pd.DataFrame) -> dict:
  
  
 def build() -> None:
-    # ADAPT: file names/formats of the real inputs
-    universe = pd.read_csv(RAW / "universe.csv")   # cik must load as int
-    filings = pd.read_parquet(RAW / "filings.parquet")
-    prices = pd.read_parquet(RAW / "prices.parquet")
-    mem_path = RAW / "membership.csv"
-    membership = pd.read_csv(mem_path) if mem_path.exists() else None
- 
-    events, exclusions = build_events(universe, filings, prices, membership)
+    cfg = load()
+    universe = pd.read_parquet(INTERIM / "universe.parquet")
+    filings = pd.read_parquet(INTERIM / "filings.parquet")
+    prices = pd.read_parquet(INTERIM / "prices.parquet")
+    mem_path = INTERIM / "membership.parquet"
+    membership = pd.read_parquet(mem_path) if mem_path.exists() else None
+
+    events, exclusions = build_events(universe, filings, prices, membership, cfg=cfg)
  
     PROCESSED.mkdir(parents=True, exist_ok=True)
     RESULTS.mkdir(parents=True, exist_ok=True)
