@@ -23,9 +23,10 @@ import json  # noqa: F401
 
 import pandas as pd
 
-from btb.eval import backtest, metrics, runs  # noqa: F401
+from btb.eval import backtest, metrics, runs
 from btb.live.drops import drop_cfg, drop_dir  # noqa: F401
-from btb.live.freeze import verify  # noqa: F401
+from btb.live.freeze import verify
+from btb.schema import validate
 
 
 def eligible(drop_id: str, measured: pd.DataFrame, data_source: str = "real") -> tuple[pd.DataFrame, pd.DataFrame]:
@@ -47,7 +48,69 @@ def eligible(drop_id: str, measured: pd.DataFrame, data_source: str = "real") ->
        Rows with no reason are scored: merge in pred_baseline, pred_model, pred_shrunk by cik.
     Return (scored, unscored) where unscored has a "reason" column.
     """
-    raise NotImplementedError
+    try:
+        frozen_ok = verify(drop_id, data_source)
+    except (OSError, json.JSONDecodeError) as exc:
+        raise SystemExit(f"{drop_id} has no valid freeze record; forecasts cannot be scored.") from exc
+    if not frozen_ok:
+        raise SystemExit(f"{drop_id} freeze verification failed; forecasts cannot be scored.")
+
+    out_dir = drop_dir(drop_id, data_source)
+    with (out_dir / "FREEZE.json").open() as file:
+        freeze_record = json.load(file)
+    forecasts = pd.read_csv(out_dir / "forecasts.csv")
+    drop = drop_cfg(drop_id)
+    window_start, window_end = (pd.Timestamp(value).date() for value in drop["window"])
+    frozen_utc = pd.Timestamp(freeze_record["frozen_utc"])
+    if frozen_utc.tzinfo is None:
+        raise ValueError("FREEZE.json frozen_utc must include a timezone offset.")
+    frozen_utc = frozen_utc.tz_convert("UTC")
+
+    work = measured.copy().reset_index(drop=True)
+    # A missed deadline voids the whole drop; do not selectively score its reports.
+    if not freeze_record["on_time"]:
+        unscored = work.copy()
+        unscored["reason"] = "drop_void_late"
+        return work.iloc[0:0].copy(), unscored
+
+    report_dates = pd.to_datetime(work["report_date"]).dt.date
+    reasons = pd.Series(pd.NA, index=work.index, dtype="string")
+    outside = (report_dates < window_start) | (report_dates > window_end)
+    reasons.loc[outside] = "outside_window"
+
+    # Acceptance timestamps may be naive Eastern time or already timezone-aware.
+    accept_utc = []
+    for value in work["accept_ts_et"]:
+        timestamp = pd.Timestamp(value)
+        if pd.isna(timestamp):
+            raise ValueError("accept_ts_et contains a missing timestamp.")
+        if timestamp.tzinfo is None:
+            timestamp = timestamp.tz_localize("America/New_York")
+        accept_utc.append(timestamp.tz_convert("UTC"))
+    before_freeze = pd.Series(accept_utc, index=work.index) <= frozen_utc
+    # Preserve the documented reason priority: window, posting time, then forecast coverage.
+    reasons.loc[reasons.isna() & before_freeze] = "reported_before_freeze"
+
+    forecast_ciks = pd.to_numeric(forecasts["cik"], errors="raise").astype("Int64")
+    measured_ciks = pd.to_numeric(work["cik"], errors="raise").astype("Int64")
+    has_forecast = measured_ciks.isin(forecast_ciks)
+    reasons.loc[reasons.isna() & ~has_forecast] = "no_forecast_row"
+
+    unscored = work.loc[reasons.notna()].copy()
+    unscored["reason"] = reasons.loc[reasons.notna()].to_numpy()
+    scored = work.loc[reasons.isna()].copy()
+    if not scored.empty:
+        # Join predictions by stable company identity, not ticker, which can change.
+        forecast_values = forecasts[["cik", "pred_baseline", "pred_model", "pred_shrunk"]].copy()
+        forecast_values["_cik_key"] = pd.to_numeric(forecast_values["cik"], errors="raise").astype("Int64")
+        scored["_cik_key"] = measured_ciks.loc[reasons.isna()].to_numpy()
+        scored = scored.merge(
+            forecast_values.drop(columns="cik"),
+            on="_cik_key",
+            how="left",
+            validate="many_to_one",
+        ).drop(columns="_cik_key")
+    return scored, unscored
 
 
 def score(drop_id: str, measured: pd.DataFrame, data_source: str = "real") -> dict | None:
@@ -60,7 +123,41 @@ def score(drop_id: str, measured: pd.DataFrame, data_source: str = "real") -> di
                    note=met["note"]).
     Return the metrics dict, or None if nothing was scored.
     """
-    raise NotImplementedError
+    scored, unscored = eligible(drop_id, measured, data_source)
+    out_dir = drop_dir(drop_id, data_source)
+    unscored.to_csv(out_dir / "unscored.csv", index=False, lineterminator="\n")
+    if scored.empty:
+        return None
+
+    report_dates = pd.to_datetime(scored["report_date"])
+    # Use report day as the cluster so the descriptive bootstrap resamples trading days.
+    pred = pd.DataFrame({
+        "event_id": scored["event_id"],
+        "ticker": scored["ticker"],
+        "sector": scored["sector"],
+        "report_date": report_dates,
+        "week_id": report_dates.dt.strftime("%Y-%m-%d"),
+        "fold": drop_id,
+        "y_true": scored["move_adj"],
+        "pred_baseline": scored["pred_baseline"],
+        "pred_model": scored["pred_model"],
+        "pred_shrunk": scored["pred_shrunk"],
+        "vix": scored["vix"],
+    })
+    validate(pred, "predictions")
+    pred.to_csv(out_dir / "scores.csv", index=False, lineterminator="\n")
+    met = metrics.evaluate(pred)
+    met["note"] = "Descriptive live result; this short, single-market sample is a sanity check."
+    runs.write_run(
+        name=f"live_{drop_id}",
+        kind="live",
+        data_source=data_source,
+        predictions=pred,
+        metrics=met,
+        data_hash=backtest.data_hash(scored),
+        note=met["note"],
+    )
+    return met
 
 
 def main(argv=None):

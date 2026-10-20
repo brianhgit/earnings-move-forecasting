@@ -22,12 +22,15 @@ from __future__ import annotations
 
 import argparse
 
+import numpy as np
 import pandas as pd
 
-from btb.config import INTERIM, LOCKBOX_DIR, config_hash, features, load  # noqa: F401
+from btb.config import INTERIM, LOCKBOX_DIR, config_hash, features, load
+from btb.dataset.windows import Excluded
 from btb.eval import backtest  # noqa: F401
-from btb.live.drops import drop_cfg, drop_dir  # noqa: F401
-from btb.models import lgbm, shrinkage  # noqa: F401
+from btb.features import price
+from btb.live.drops import drop_cfg, drop_dir
+from btb.models import lgbm, shrinkage
 
 FORECAST_COLS = ["drop_id", "ticker", "cik", "cutoff_date", "n_prior", *features(),
                  "pred_baseline", "pred_model", "pred_shrunk", "model_fp", "config_hash"]
@@ -46,7 +49,38 @@ def features_asof(events_all: pd.DataFrame, prices: pd.DataFrame, universe: pd.D
     raises Excluded (price gap), leave its price inputs NaN. Either way the company stays
     in the table, and make_forecasts puts it in not_forecast.csv.
     """
-    raise NotImplementedError
+    cutoff_ts = pd.Timestamp(cutoff)
+    feature_cols = features()
+    history_cols = {"hist_median8", "hist_mean8", "hist_max8", "hist_last"}
+    # Only prior reports whose price reaction had finished by cutoff are available history.
+    completed = events_all.loc[pd.to_datetime(events_all["after_date"]) <= cutoff_ts]
+    rows = []
+
+    for company in universe.itertuples(index=False):
+        cik = int(company.cik)
+        ticker = str(company.yahoo_ticker)
+        all_prior = completed.loc[completed["cik"] == cik]
+        prior = all_prior.sort_values(["report_date", "after_date"]).tail(k)
+        moves = prior["move_adj"].astype(float)
+        row = {
+            "ticker": ticker,
+            "cik": cik,
+            "n_prior": int(len(all_prior)),
+            "hist_median8": float(moves.median()) if not moves.empty else float("nan"),
+            "hist_mean8": float(moves.mean()) if not moves.empty else float("nan"),
+            "hist_max8": float(moves.max()) if not moves.empty else float("nan"),
+            "hist_last": float(moves.iloc[-1]) if not moves.empty else float("nan"),
+        }
+        try:
+            row.update(price.price_features(prices, ticker, cutoff_ts))
+        except Excluded as exc:
+            if exc.reason != "price_gap":
+                raise
+            # Keep the company visible; missing inputs will route it to not_forecast.csv.
+            row.update({name: float("nan") for name in feature_cols if name not in history_cols})
+        rows.append(row)
+
+    return pd.DataFrame(rows, columns=["ticker", "cik", "n_prior", *feature_cols])
 
 
 def make_forecasts(drop_id: str, data_source: str = "real", inputs: pd.DataFrame | None = None) -> pd.DataFrame:
@@ -69,7 +103,62 @@ def make_forecasts(drop_id: str, data_source: str = "real", inputs: pd.DataFrame
     Return the forecasts frame.
     Done when tests/test_live.py passes.
     """
-    raise NotImplementedError
+    cfg = load()
+    if data_source == "real" and not (LOCKBOX_DIR / "OPENED.json").exists():
+        raise SystemExit("The lockbox must be opened before creating live forecasts.")
+
+    drop = drop_cfg(drop_id, cfg)
+    cutoff = pd.Timestamp(drop["cutoff"])
+    events_all = backtest.load_events(data_source, "lockbox")
+    # Train only on outcomes already fully observed by this drop's feature cutoff.
+    training = events_all.loc[pd.to_datetime(events_all["after_date"]) <= cutoff].copy()
+    if training.empty:
+        raise ValueError(f"No completed training events are available by {cutoff.date()}.")
+    model = lgbm.fit(training, cfg)
+    shrinkage_params = shrinkage.fit(training)
+
+    if inputs is None:
+        prices = pd.read_parquet(INTERIM / "prices.parquet")
+        universe = pd.read_parquet(INTERIM / "universe.parquet")
+        inputs = features_asof(events_all, prices, universe, cutoff)
+
+    feature_cols = features(cfg)
+    required = {"ticker", "cik", "n_prior", *feature_cols}
+    missing = sorted(required - set(inputs.columns))
+    if missing:
+        raise ValueError(f"Forecast inputs are missing required columns: {missing}")
+
+    work = inputs.loc[:, ["ticker", "cik", "n_prior", *feature_cols]].copy()
+    eligible = work["n_prior"].ge(int(cfg["event"]["min_prior_events"]))
+    eligible &= work[feature_cols].notna().all(axis=1)
+    forecast_inputs = work.loc[eligible].copy()
+    skipped = work.loc[~eligible, ["ticker", "cik", "n_prior"]].copy()
+
+    # Keep calls module-qualified so test stand-ins can replace unimplemented models.
+    model_predictions = lgbm.predict(model, forecast_inputs, cfg)
+    shrunk_predictions = shrinkage.predict(shrinkage_params, forecast_inputs)
+    output = forecast_inputs.copy()
+    output.insert(0, "drop_id", drop_id)
+    output.insert(3, "cutoff_date", cutoff.date().isoformat())
+    output["pred_baseline"] = output["hist_median8"]
+    output["pred_model"] = np.asarray(model_predictions, dtype=float)
+    output["pred_shrunk"] = np.asarray(shrunk_predictions, dtype=float)
+    output["model_fp"] = lgbm.fingerprint(model)
+    output["config_hash"] = config_hash(cfg)
+    # Fixed column order, sorting, and rounding make the posted file hash reproducible.
+    output = output.loc[:, FORECAST_COLS].sort_values("ticker").reset_index(drop=True)
+
+    float_cols = [
+        name for name in output.columns
+        if name not in {"drop_id", "ticker", "cik", "cutoff_date", "n_prior", "model_fp", "config_hash"}
+    ]
+    output[float_cols] = output[float_cols].round(4)
+
+    out_dir = drop_dir(drop_id, data_source)
+    output.to_csv(out_dir / "forecasts.csv", index=False, lineterminator="\n", float_format="%.4f")
+    skipped.to_csv(out_dir / "not_forecast.csv", index=False, lineterminator="\n")
+    lgbm.save(model, out_dir / "model.pkl")
+    return output
 
 
 def main(argv=None):
