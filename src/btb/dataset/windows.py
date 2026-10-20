@@ -31,7 +31,7 @@ import datetime as dt
 from dataclasses import dataclass
 from zoneinfo import ZoneInfo
 
-from btb.dataset.trading_calendar import (
+from btb.dataset.calendar import (
     is_session,
     next_session,
     prev_session,
