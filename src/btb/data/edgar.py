@@ -79,7 +79,21 @@ from btb.config import INTERIM, RAW, load
 from btb.schema import validate
 
 USER_AGENT = os.environ.get("SEC_USER_AGENT", "Your Name your.email@ucdavis.edu")
-ACCEPTANCE_TZ = "UTC"   # verified 2026-10-18 on NFLX/TSLA after-close reports, see docs/DECISIONS.md
+# How to read acceptanceDateTime. Checked against SEC filing index pages, see docs/DECISIONS.md.
+#   "UTC"              the raw value is real UTC (what the API returned on 2026-10-18)
+#   "UTC_TWICE"        the raw value is Eastern time plus twice the UTC offset (8 h in summer,
+#                      10 h in winter), so converting UTC -> Eastern twice gives the real time
+#                      (what the API returns since 2026-10-20, all 12 checked filings)
+#   "America/New_York" the raw value is already Eastern wall-clock time with a wrong "Z"
+ACCEPTANCE_TZ = "UTC_TWICE"
+
+# Acceptance times read off the SEC's own filing index pages (the "Accepted" field).
+# parse_filings checks every one it finds and stops if they don't match, so a change in
+# how the SEC reports times can never slip into the table unnoticed.
+KNOWN_ACCEPTANCE_ET = {
+    "0000320193-19-000007": "2019-01-29 16:30:18",   # AAPL, winter
+    "0000320193-22-000006": "2022-01-27 16:30:36",   # AAPL, winter
+}
 TEST_CIKS = [1065280, 1318605, 320193]   # NFLX, TSLA, AAPL
 
 BASE_URL = "https://data.sec.gov/submissions"
@@ -121,9 +135,29 @@ def _to_eastern(raw: pd.Series) -> pd.Series:
         ts = ts.dt.tz_localize(None)                        # the Z is wrong: keep the wall-clock time
     elif ACCEPTANCE_TZ == "UTC":
         ts = ts.dt.tz_convert("America/New_York").dt.tz_localize(None)
+    elif ACCEPTANCE_TZ == "UTC_TWICE":
+        once = ts.dt.tz_convert("America/New_York").dt.tz_localize(None)
+        ts = once.dt.tz_localize("UTC").dt.tz_convert("America/New_York").dt.tz_localize(None)
     else:
-        raise ValueError(f"ACCEPTANCE_TZ must be 'America/New_York' or 'UTC', got {ACCEPTANCE_TZ!r}")
+        raise ValueError(f"ACCEPTANCE_TZ must be 'America/New_York', 'UTC' or 'UTC_TWICE', got {ACCEPTANCE_TZ!r}")
     return ts.astype("datetime64[us]")
+
+
+def check_known_times(df: "pd.DataFrame") -> int:  # noqa: F821
+    """Compare accept_ts_et with KNOWN_ACCEPTANCE_ET for every known accession in df.
+    Raises ValueError on any mismatch. Returns how many were checked."""
+    checked = 0
+    for acc, want in KNOWN_ACCEPTANCE_ET.items():
+        got = df.loc[df["accession"] == acc, "accept_ts_et"]
+        if got.empty:
+            continue
+        checked += 1
+        if got.iloc[0] != pd.Timestamp(want):
+            raise ValueError(
+                f"Acceptance time for {acc} came out {got.iloc[0]}, but the SEC filing page says {want} ET. "
+                f"The SEC changed how it reports times: re-check ACCEPTANCE_TZ in edgar.py against a few "
+                f"filing index pages before building anything.")
+    return checked
 
 
 def _has_item(items: str, item: str) -> bool:
@@ -156,6 +190,7 @@ def parse_filings(snapshot_dir) -> "pd.DataFrame":  # noqa: F821
         lambda s: _has_item(s, cfg["event"]["required_item"]))
     df = df[keep].drop_duplicates("accession").copy()
     df["accept_ts_et"] = _to_eastern(df["acceptanceDateTime"])
+    check_known_times(df)
     df = df[df["accept_ts_et"] >= pd.Timestamp(cfg["dates"]["edgar_start"])]
 
     df = (df[["cik", "accession", "form", "items", "accept_ts_et"]]
