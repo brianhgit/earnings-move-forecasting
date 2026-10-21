@@ -12,10 +12,15 @@ Two functions:
 Steps inside build_events, in this order:
   1. Keep filings with form == "8-K" (not "8-K/A") whose items include "2.02", for CIKs
      in the universe. Anything else is simply ignored (not an exclusion).
-  2. Per company (group by cik), in accept_ts_et order: a 2.02 filing fewer than 45 days
-     (cfg event.dedupe_days) after the last KEPT one -> exclusions, reason "duplicate_filing".
-     Measure with (ts - last_kept_ts).days < 45, so exactly 45 days apart is NOT a duplicate.
-     "Kept" means kept at this step, even if a later step excludes it.
+  2. Per company (group by cik), walking back from the newest filing: filings fewer than 45
+     days (cfg event.dedupe_days) before it share one report window. Keep the first filing of
+     the window's last burst (filings fewer than 3 days, cfg event.burst_days, before the
+     newest one); every other filing in the window -> exclusions, reason "duplicate_filing".
+     Then repeat from the newest filing older than the window. Side news such as delivery
+     numbers or guidance comes before the real report, and a press release plus next-morning
+     slides is one burst, so the press release is kept. Measure with .days < 45, so exactly
+     45 days apart is NOT a duplicate. "Kept" means kept at this step, even if a later step
+     excludes it.
   3. windows.assign_window(accept_ts_et, plan). Excluded -> exclusions with its reason.
   4. Adjusted closes for the stock (by yahoo_ticker) and SPY on before_date and after_date.
      Any missing -> "missing_price".
@@ -150,6 +155,7 @@ def build_events(
     cfg = cfg if cfg is not None else load()
     plan = plan if plan is not None else cfg["event"]["timing_plan"]
     dedupe_days = cfg["event"]["dedupe_days"]
+    burst_days = cfg["event"]["burst_days"]
     min_prior = cfg["event"]["min_prior_events"]
     exclusions: list[dict] = []
  
@@ -174,17 +180,36 @@ def build_events(
     f["accept_ts_et"] = pd.to_datetime(f["accept_ts_et"])
     f = f.sort_values(["cik", "accept_ts_et", "accession"], kind="stable")
  
-    # STEP 2: duplicates, per company, in time order, measured against the last KEPT filing.
+    # STEP 2: duplicates. Per company, walk back from the newest filing: every filing fewer than
+    # dedupe_days before it belongs to the same report window. In that window, keep the FIRST
+    # filing of the LAST burst (filings within burst_days of the newest one), and log the rest.
+    # Side news (delivery numbers, guidance letters) comes before the real report, so the last
+    # burst is the report; a press release plus next-morning slides counts as one burst, so the
+    # press release wins. Then continue from the newest filing older than the window.
     kept_rows: list[dict] = []
-    last_kept_ts: dict = {}
-    for row in f.to_dict("records"):
-        last = last_kept_ts.get(row["cik"])
-        if last is not None and (row["accept_ts_et"] - last).days < dedupe_days:
-            days = (row["accept_ts_et"] - last).days
-            exclude(row, "duplicate_filing", f"{days} days after previous")
-            continue
-        last_kept_ts[row["cik"]] = row["accept_ts_et"]   # kept here, even if a later step drops it
-        kept_rows.append(row)
+    for _, grp in f.groupby("cik", sort=False):
+        rows = grp.to_dict("records")              # oldest -> newest
+        i = len(rows) - 1
+        while i >= 0:
+            newest = rows[i]["accept_ts_et"]
+            j = i
+            while j - 1 >= 0 and (newest - rows[j - 1]["accept_ts_et"]).days < dedupe_days:
+                j -= 1                             # rows[j..i] share one window
+            window = rows[j:i + 1]
+            burst = [r for r in window if (newest - r["accept_ts_et"]).days < burst_days]
+            keep = burst[0]                        # earliest filing of the last burst
+            for r in window:
+                if r is keep:
+                    continue
+                if r["accept_ts_et"] < keep["accept_ts_et"]:
+                    days = (keep["accept_ts_et"] - r["accept_ts_et"]).days
+                    exclude(r, "duplicate_filing", f"{days} days before the kept filing")
+                else:
+                    days = (r["accept_ts_et"] - keep["accept_ts_et"]).days
+                    exclude(r, "duplicate_filing", f"{days} days after the kept filing, same burst")
+            kept_rows.append(keep)                 # kept here, even if a later step drops it
+            i = j - 1
+    kept_rows.sort(key=lambda r: (r["cik"], r["accept_ts_et"]))
  
     # STEPS 3-5: window, prices, returns
     lookup = _price_lookup(prices)

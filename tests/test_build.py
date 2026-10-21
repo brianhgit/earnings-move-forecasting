@@ -94,3 +94,16 @@ def test_plan_b_keeps_market_hours(raw, standins):
     events, excl = build.build_events(u, f, p, plan="B")
     assert planted["during_market_hours"] in set(events["event_id"])
     assert (events["timing"] == "ANY").all()
+
+
+def test_duplicate_rule_keeps_the_real_report(raw):
+    # One company, two quarters, shaped like real cases: side news before the report
+    # (delivery numbers, a guidance letter), and slides the morning after the press release.
+    u, _, p, _ = raw
+    cik = int(u["cik"].iloc[0])
+    ts = ["2023-01-03 09:00", "2023-01-25 16:05", "2023-01-26 07:30", "2023-04-03 09:00", "2023-04-20 16:05"]
+    f = pd.DataFrame({"cik": cik, "accession": [f"T-{i}" for i in range(5)], "form": "8-K",
+                      "items": "2.02,9.01", "accept_ts_et": pd.to_datetime(ts)})
+    events, excl = build.build_events(u, f, p, plan="A")
+    kept = sorted(set(f["accession"]) - set(excl.loc[excl["reason"] == "duplicate_filing", "accession"]))
+    assert kept == ["T-1", "T-4"]   # the Jan 25 press release and the Apr 20 report

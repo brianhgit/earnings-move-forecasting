@@ -12,7 +12,7 @@ If the success rule in §9 is met, the claim we will make is exactly: *"On S&P 5
 
 ## 2. Event definition
 
-An **event** is the first Form 8-K (amendments 8-K/A excluded) that lists Item 2.02 filed by a company (identified by SEC CIK) in any 45-day period. A second Item 2.02 filing within 45 days of the first is excluded and logged.
+An **event** is a Form 8-K (amendments 8-K/A excluded) that lists Item 2.02, filed by a company (identified by SEC CIK). Item 2.02 filings fewer than 45 days apart, counted back from the newest, form one report window; the event is the first filing of the window's last burst (filings fewer than 3 days before the newest one), and every other filing in the window is excluded and logged. This keeps the earnings report over earlier side news (delivery numbers, guidance updates) filed under the same item, and keeps a press release over follow-up filings the next day.
 
 The announcement time is the filing's EDGAR acceptance time, converted to US Eastern time (the timezone of the raw field is verified on 5 known reports and recorded in DECISIONS.md).
 

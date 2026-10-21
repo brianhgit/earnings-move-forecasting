@@ -28,7 +28,8 @@ dates:
 event:
   filing_forms: ["8-K"]            # LOCKED. 8-K/A amendments are excluded
   required_item: "2.02"            # LOCKED. Results of Operations and Financial Condition
-  dedupe_days: 45                  # LOCKED. Two Item 2.02 filings within 45 days: keep the first, log the second
+  dedupe_days: 45                  # LOCKED. Item 2.02 filings within 45 days are one report window
+  burst_days: 3                    # LOCKED. Keep the first filing of the window's last burst (filings within 3 days)
   market_open_et: "09:30"
   timing_plan: A                   # A or B, set by the timing hand check, then LOCKED
   min_prior_events: 8              # LOCKED. Fewer than 8 completed prior reports = not scored (both predictors)
