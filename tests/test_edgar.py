@@ -37,8 +37,9 @@ def _write_snapshot(folder):
     (folder / PAGE).write_text(json.dumps(older))   # older pages: columns at the top level
 
 
-def test_parse_filters_dedupes_and_converts(tmp_path):
+def test_parse_filters_dedupes_and_converts(tmp_path, monkeypatch):
     _write_snapshot(tmp_path)
+    monkeypatch.setattr(edgar, "ACCEPTANCE_TZ", "UTC")   # this fixture holds real-UTC values
     df = edgar.parse_filings(tmp_path)
     validate(df, "filings")
     assert list(df.columns) == ["cik", "accession", "form", "items", "accept_ts_et"]
@@ -108,3 +109,20 @@ def test_download_saves_main_and_older_pages_and_never_overwrites(tmp_path, monk
 
     with pytest.raises(FileExistsError):
         edgar.download("20240101", [42])
+
+
+def test_utc_twice_matches_sec_filing_pages(monkeypatch):
+    # raw values as the API returns them since 2026-10-20, next to the SEC's "Accepted" times
+    monkeypatch.setattr(edgar, "ACCEPTANCE_TZ", "UTC_TWICE")
+    raw = pd.Series(["2022-01-28T02:30:36.000Z", "2024-07-19T00:01:22.000Z"])   # winter, summer
+    got = edgar._to_eastern(raw).tolist()
+    assert got == [pd.Timestamp("2022-01-27 16:30:36"), pd.Timestamp("2024-07-18 16:01:22")]
+
+
+def test_known_times_stop_a_wrong_conversion():
+    good = pd.DataFrame({"accession": ["0000320193-22-000006"], "accept_ts_et": [pd.Timestamp("2022-01-27 16:30:36")]})
+    assert edgar.check_known_times(good) == 1
+    bad = good.assign(accept_ts_et=[pd.Timestamp("2022-01-27 21:30:36")])
+    with pytest.raises(ValueError):
+        edgar.check_known_times(bad)
+    assert edgar.check_known_times(good.assign(accession=["not-a-known-one"])) == 0
