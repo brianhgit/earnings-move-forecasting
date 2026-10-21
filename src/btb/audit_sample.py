@@ -12,7 +12,7 @@ lockbox) and draws, with the locked seed (cfg project.seed):
 
 Only reports up to dev_end (2024) are drawn, so nobody looks at the locked test years.
 Rows are split evenly across checkers c1, c2, ... (10 precision + 5 recall each with 6
-checkers); the market-hours rows all go to c1. Names stay out of the repo: the c-number
+checkers); the market-hours rows all go to c1 (the person who combines the sheets). Names stay out of the repo: the c-number
 to person list lives in Notion. Each checker also gets their own files in
 audit/sheets/ (c1_precision.csv, c1_recall.csv, ...) to fill in; paste the answers back
 into the combined files when they come back.
@@ -74,9 +74,9 @@ def draw(events: pd.DataFrame, exclusions: pd.DataFrame, universe: pd.DataFrame,
         cik, q = int(ciks[i // len(quarters)]), str(quarters[i % len(quarters)])
         hit = ev_q[(ev_q["cik"] == cik) & (ev_q["q"] == q)]
         note = "" if hit.empty else "ours: " + "; ".join(
-            f"{r.event_id} before={pd.Timestamp(r.before_date).date()} after={pd.Timestamp(r.after_date).date()}"
+            f"{r.event_id} timing={r.timing} before={pd.Timestamp(r.before_date).date()} after={pd.Timestamp(r.after_date).date()}"
             for r in hit.itertuples())
-        rows.append({"ticker": tick.get(cik, ""), "cik": cik, "fiscal_quarter_checked": q,
+        rows.append({"ticker": tick.get(cik, ""), "cik": cik, "calendar_quarter_checked": q,
                      "our_event_id": "" if hit.empty else hit["event_id"].iloc[0], "notes": note})
     rec = pd.DataFrame(rows)
 

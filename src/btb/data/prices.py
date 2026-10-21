@@ -193,7 +193,8 @@ def load_long(snapshot: str) -> pd.DataFrame:
         prices = pd.concat(frames, ignore_index=True)
         prices = prices.sort_values(["ticker", "date"]).reset_index(drop=True)
     else:
-        prices = pd.DataFrame(columns=["date", "ticker", "adj_close", "close", "volume"])
+        # An empty folder means the download failed; stop instead of writing an empty table.
+        raise FileNotFoundError(f"no ticker files in {snapshot_dir}; the download probably failed (see failures.csv)")
     validate(prices, "prices")
     return prices
 

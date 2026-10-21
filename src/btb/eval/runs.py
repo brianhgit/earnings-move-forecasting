@@ -14,8 +14,8 @@ ones, so the final report can say "we tried N things on dev before locking".
 
 from __future__ import annotations
 
-import getpass
 import json
+import os
 import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
@@ -66,7 +66,7 @@ def write_run(*, name: str, kind: str, data_source: str, predictions: pd.DataFra
 
     meta = {
         "run_id": run_id, "created_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-        "kind": kind, "data_source": data_source, "name": name, "author": getpass.getuser(),
+        "kind": kind, "data_source": data_source, "name": name, "author": os.environ.get("BTB_AUTHOR", ""),  # no login names in the repo
         "git_sha": sha, "git_dirty": dirty, "config_hash": config_hash(), "data_hash": data_hash,
         "note": note,
     }

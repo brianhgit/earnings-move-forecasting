@@ -11,22 +11,29 @@ markdown file (tables via DataFrame.to_markdown) plus plotly charts as .html:
 
 Sections:
   1. Kept vs dropped reports, by reason and by year.
-       real:      kept = data/processed/events_dev.parquet (+ events_live.parquet; never
-                  open events_lockbox), dropped = data/processed/exclusions.csv, plus the
-                  counts in results/build_report.json
-       synthetic: kept = btb.synthetic.events("demo"); dropped = the rows of
-                  btb.synthetic.measured("demo") whose event_id isn't in events("demo"),
-                  all with reason "insufficient_history"
+       real:      kept per year = kept_by_year in results/build_report.json (counts only, so
+                  every year is fine to show; never open events_lockbox.parquet itself),
+                  dropped = data/processed/exclusions.csv, by reason and by the year of
+                  accept_ts_et
+       synthetic: kept = btb.synthetic.events("demo") by year of report_date; dropped = the
+                  rows of btb.synthetic.measured("demo") with report_date on or after
+                  2019-01-01 whose f"{cik}-{accession}" isn't an event_id in events("demo"),
+                  all with reason "insufficient_history" (measured has no event_id column;
+                  rows before 2019 are history only and aren't counted as drops)
      Table: rows = year, columns = kept plus one column per drop reason. Chart: stacked bars.
   2. Hand-check results, from audit/precision_audit.csv and audit/recall_audit.csv (same
      columns as the *_template.csv files next to them):
        precision = rows with correct_window_plan_a == "yes" out of all rows (target 57/60)
-       recall    = rows with in_our_table_yes_no == "yes" AND correct_window_plan_a == "yes"
-                   out of rows with release_found_yes_no == "yes" (target 27/30)
+       recall    = rows with (in_our_table_yes_no == "yes" AND correct_window_plan_a == "yes")
+                   or in_our_table_yes_no == "market hours" (released 9:30 to 4 ET, which
+                   plan A excludes on purpose), out of rows with release_found_yes_no == "yes"
+                   (target 27/30). For plan B, "market hours" rows need correct_window_plan_b.
+     Compare answers case-insensitively and ignore spaces.
      Show each as k/n with its wilson_lower(k, n). Same for plan B columns.
   3. Timing sanity check (real only): for each kept report, compare |ret_stock| with the
      absolute log return of the stock on the NEXT session after after_date (read the
-     adjusted closes from data/interim/prices.parquet). If our windows are right, our move
+     adj_close column of data/interim/prices.parquet, matched on ticker and date; events
+     have ticker, after_date and ret_stock). Use events_dev.parquet only. If our windows are right, our move
      should usually be the bigger one. Show the median of |ret_stock| / |next-day return|
      by year, and the share of reports where ours is bigger.
 
