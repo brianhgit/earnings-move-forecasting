@@ -45,7 +45,7 @@ def build(oldid: str) -> pd.DataFrame:
     html = requests.get(WIKI.format(oldid=oldid), timeout=30,
                         headers={"User-Agent": "earnings-move-forecasting (research project)"}).text
     (RAW / "universe").mkdir(parents=True, exist_ok=True)
-    (RAW / "universe" / f"wikipedia_{oldid}.html").write_text(html)
+    (RAW / "universe" / f"wikipedia_{oldid}.html").write_text(html, encoding="utf-8")
     df = from_html(html)
     INTERIM.mkdir(parents=True, exist_ok=True)
     df.to_parquet(INTERIM / "universe.parquet", index=False)

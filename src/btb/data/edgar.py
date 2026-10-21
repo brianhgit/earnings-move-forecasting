@@ -139,7 +139,7 @@ def parse_filings(snapshot_dir) -> "pd.DataFrame":  # noqa: F821
 
     frames = []
     for path in paths:
-        data = json.loads(path.read_text())
+        data = json.loads(path.read_text(encoding="utf-8"))
         # Main file: columns under filings.recent. Older -submissions-### pages: at the top level.
         cols = data["filings"]["recent"] if "filings" in data else data
         forms = cols.get("form", [])
