@@ -34,7 +34,6 @@ Model settings are fixed in advance in [`configs/project.yaml`](configs/project.
 | [SEC EDGAR submissions API](https://www.sec.gov/search-filings/edgar-application-programming-interfaces) | Form 8-K Item 2.02 filings and their acceptance timestamps, 2017 onward |
 | [yfinance](https://github.com/ranaroussi/yfinance) | Daily adjusted and raw closes for every company, SPY and ^VIX, 2016 onward |
 | [Wikipedia S&P 500 list](https://en.wikipedia.org/wiki/List_of_S%26P_500_companies) | The company universe, frozen at a fixed revision |
-| [fja05680/sp500](https://github.com/fja05680/sp500) | Historical index membership, used for a survivorship sensitivity analysis |
 
 About 14,000 to 15,000 earnings reports from January 2019 to September 2026 after cleaning. Raw data is not committed. Every download is saved as an immutable dated snapshot, and [`data/MANIFEST.json`](data/) records its checksums so any rerun can prove it uses identical inputs.
 
@@ -47,7 +46,6 @@ About 14,000 to 15,000 earnings reports from January 2019 to September 2026 afte
 - **Success criterion.** At least a 3% improvement, with the interval's lower bound above zero. This is fixed before any model result exists.
 - **Diagnostics.**
   - The same metric with company-level clustering.
-  - Point-in-time index members only.
   - A shrinkage control that tests whether any gain is just pulling forecasts toward the overall median.
   - Breakdowns by sector and by VIX level.
 - **Leakage controls.** Automated tests confirm that:
@@ -106,7 +104,7 @@ Tests run entirely on synthetic data and never touch the network. Functions that
 | Build the events table | `python -m btb.dataset.build` | `make dataset` |
 | Backtest | `python -m btb.eval.backtest --name <name> --data real` | `make backtest NAME=<name>` |
 | Open the locked test (once) | `python -m btb.eval.lockbox --data real` | `make lockbox` |
-| Live forecast and freeze | `python -m btb.live.forecast --drop drop1`, then `python -m btb.live.freeze --drop drop1` | `make forecast DROP=drop1`, `make freeze DROP=drop1` |
+| Live forecast and freeze | `python -m btb.live.forecast --drop drop2b`, then `python -m btb.live.freeze --drop drop2b` | `make forecast DROP=drop2b`, `make freeze DROP=drop2b` |
 | Full pipeline on synthetic data | `python -m btb.demo` | `make demo` |
 | App | `streamlit run app/streamlit_app.py` | `make app` |
 
@@ -119,14 +117,13 @@ In progress. Results will be reported here, including results that do not favor 
 | | Baseline MAE | Model MAE | Improvement (95% interval) |
 |---|---|---|---|
 | Locked test, Jan 2025 to Sep 2026 | | | |
-| Live drop 1 | | | descriptive |
-| Live drop 2 | | | descriptive |
+| Live drop, Nov 2 to 6, 2026 | | | descriptive |
 
 ## Limitations
 
-- The universe is the S&P 500 as of October 2026, so companies that left the index before then are missing. A point-in-time sensitivity analysis is reported alongside the headline.
+- The universe is the S&P 500 as of October 2026, so companies that left the index before then are missing. Point-in-time index membership is not used, so the claim covers today's members only.
 - Announcement times come from EDGAR filing timestamps, which can lag the actual press release. A hand check against press releases decides whether one-day windows are reliable enough to use.
-- Free price data can contain errors, so suspicious prices are flagged and the affected reports excluded and logged.
+- Free price data can contain errors, so missing sessions and suspicious jumps are flagged in the data report.
 - Live results cover a short period of a single market environment, so they are a sanity check rather than the main evidence.
 
 This project forecasts the size of price moves for research purposes. It is not a trading strategy or financial advice.

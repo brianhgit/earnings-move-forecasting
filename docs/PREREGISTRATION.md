@@ -31,7 +31,7 @@ Use Plan A if precision >= 57/60 AND recall >= 27/30 AND filings >= 90%. Otherwi
 
 Companies in the S&P 500 per the Wikipedia list revision of Oct 9, 2026 (revision id in DECISIONS.md), one share class per CIK (GOOGL, FOXA, NWSA, BRK-B, BF-B kept). Events with report dates Jan 1, 2019 to Sep 30, 2026.
 
-An event is excluded, with the reason logged, if: it falls in market hours (Plan A), it is a duplicate filing, the stock or SPY lacks an adjusted close on the before or after date, any session is missing between 63 sessions before the cutoff and the after date, a non-event daily return above 40% without a split appears in that span, or fewer than 8 earlier events of the same company had completed by the cutoff. Excluded events are excluded for both predictors. No event is excluded for any other reason, and no exclusion is decided by looking at a move.
+An event is excluded, with the reason logged, if: it falls in market hours (Plan A), it is a duplicate filing, the stock or SPY lacks an adjusted close on the before or after date, the stock has fewer than 64 sessions of price history up to the cutoff or no close on the cutoff session, or fewer than 8 earlier events of the same company had completed by the cutoff. Missing sessions and non-split daily moves above 40% are checked across every ticker's full price history as data-quality checks before locking and reported in the data report; no event is excluded for them. Excluded events are excluded for both predictors. No event is excluded for any other reason, and no exclusion is decided by looking at a move.
 
 ## 4. Target
 
@@ -59,7 +59,7 @@ Inputs: `hist_median8`, `hist_mean8`, `hist_max8`, `hist_last` (the company's la
 
 Loss: absolute error in percentage points. Test statistic: relative MAE improvement, `1 - MAE_model / MAE_baseline`, over all locked-test events. Confidence interval: 95% percentile interval from a cluster bootstrap that resamples report weeks (ISO week of the report date) with replacement, 2,000 resamples, seed 2026.
 
-Pre-specified secondary results (reported, never substituted for the headline): the same statistic with company clusters; the same statistic on events where the company was an index member at the cutoff (point-in-time list from fja05680/sp500); improvement vs the shrunk baseline with week clusters; results by sector and by VIX bucket (<15, 15-20, 20-30, 30+); win rate.
+Pre-specified secondary results (reported, never substituted for the headline): the same statistic with company clusters; improvement vs the shrunk baseline with week clusters; results by sector and by VIX bucket (<15, 15-20, 20-30, 30+); win rate. Point-in-time index membership is not used; the universe is today's members, a survivorship limitation (AUDIT.md I4).
 
 ## 9. Success criterion
 
@@ -69,13 +69,13 @@ Project success does not depend on model success: a clean negative result report
 
 ## 10. Live protocol
 
-Two forecast drops (cutoffs Oct 16 and Oct 23, 2026; post deadlines Mon Oct 19 21:00 PT and Sun Oct 25 21:00 PT), plus an extra demonstration drop (cutoff Nov 13) that is not part of this evaluation. Each drop forecasts every universe company with enough history, using a model trained once per drop on every event completed by the cutoff. The file is frozen and its SHA-256 posted publicly and attached to a GitHub Release before the deadline. A drop posted late is void.
+One forecast drop is evaluated (cutoff Oct 30, 2026; post deadline Sun Nov 1 21:00 PT), plus an extra demonstration drop (cutoff Nov 13) that is not part of this evaluation. Drops with cutoffs Oct 16 and Oct 23 were planned but not run; nothing from them is scored. Each drop forecasts every universe company with enough history, using a model trained once per drop on every event completed by the cutoff. The file is frozen and its SHA-256 posted publicly and attached to a GitHub Release before the deadline. A drop posted late is void.
 
-An event is scored if its company has a forecast row, its EDGAR acceptance time is after the freeze, its report date is inside the drop's window (Oct 20 to 23; Oct 26 to 30), and it passes the §3 rules. Everything else is listed as unscored with a reason. Nothing is backfilled. Live results are descriptive: their interval resamples trading days and is not used for the §9 decision.
+An event is scored if its company has a forecast row, its EDGAR acceptance time is after the freeze, its report date is inside the drop's window (Nov 2 to 6), and it passes the §3 rules. Everything else is listed as unscored with a reason. Nothing is backfilled. Live results are descriptive: their interval resamples trading days and is not used for the §9 decision.
 
 ## 11. Reported no matter what
 
-Counts kept and dropped by reason and year; both hand-check tallies; every dev run; the locked-test result and every reopening; all §8 secondary results; both live drops, scored or void.
+Counts kept and dropped by reason and year; both hand-check tallies; every dev run; the locked-test result and every reopening; all §8 secondary results; the live drop, scored or void.
 
 ## 12. Changes after locking
 

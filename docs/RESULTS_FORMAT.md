@@ -47,7 +47,7 @@ overall                      n_events, n_weeks, n_companies, mae_baseline, mae_m
 bootstrap_week               point, ci_low, ci_high, n_clusters, share_above_zero      <- the headline
 bootstrap_company            same, clustered by company                                <- sensitivity
 shrinkage                    model vs shrunk baseline, with its own range
-point_in_time_members_only   overall stats on events where the company was in the index then
+point_in_time_members_only   overall stats on events where the company was in the index then (computed, not reported; prereg §8)
 by_fold, by_sector, by_vix   breakdown tables
 success, tripwire            the pre-registered decision and the leak alarm
 bootstrap_draws_week         the 2,000 resampled values (for the histogram)

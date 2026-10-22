@@ -84,10 +84,16 @@ live:
       cutoff: "2026-10-16"
       post_by: "2026-10-19T21:00:00-07:00"
       window: ["2026-10-20", "2026-10-23"]
+      note: "Not run. Kept for tests and the demo only; nothing from it is scored."
     - id: drop2
       cutoff: "2026-10-23"
       post_by: "2026-10-25T21:00:00-07:00"
       window: ["2026-10-26", "2026-10-30"]
+      note: "Not run. Kept for reference only; nothing from it is scored."
+    - id: drop2b
+      cutoff: "2026-10-30"
+      post_by: "2026-11-01T21:00:00-08:00"
+      window: ["2026-11-02", "2026-11-06"]
     - id: drop3
       cutoff: "2026-11-13"
       post_by: "2026-11-16T21:00:00-08:00"

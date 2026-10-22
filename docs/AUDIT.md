@@ -16,7 +16,7 @@ We ran the skeptical-reviewer checklist (fake signal, leakage, biased evaluation
 | I1 | Close-to-close return includes the whole market's move | Important | On a day the S&P falls 3%, every stock "moves" 3% for reasons that have nothing to do with its earnings. | Target is market-adjusted: `100 * abs(ln(P_after/P_before) - ln(SPY_after/SPY_before))`. Raw move kept as a side number. Adjusted closes handle splits; dividends are tiny inside a 1-day window and also appear in SPY. | `configs/project.yaml`, `build.py` |
 | I2 | Model trained for a different loss than we score | Important | LightGBM's default (squared error) aims at the mean of a heavy-tailed target; we score absolute error, which rewards the median. The baseline (a median) would win for a dumb reason. Our synthetic demo shows exactly this. | `objective: l1`. | `configs/project.yaml` |
 | I3 | A "win" might just be shrinkage | Important | Pulling every stock's guess toward the overall median beats the raw per-stock median with no real learning. | Diagnostic predictor: per-stock median shrunk toward the global median, weight fit on training data only. We only say "beyond shrinkage" if the model also beats that (95% range above 0). | `models/shrinkage.py` |
-| I4 | Survivorship: Oct 2026 list used for 2019-26 | Important | Companies that left the index (acquired, shrank, went bust) are missing, and companies that only joined later are in. That biases which kinds of stocks we test on. | Scope the claim: "S&P 500 members as of Oct 9, 2026." Sensitivity: rerun the scoring on events where the company was in the index at the time (point-in-time list from fja05680/sp500). Report both. | `universe.py`, metrics `point_in_time_members_only` |
+| I4 | Survivorship: Oct 2026 list used for 2019-26 | Important | Companies that left the index (acquired, shrank, went bust) are missing, and companies that only joined later are in. That biases which kinds of stocks we test on. | Scope the claim: "S&P 500 members as of Oct 9, 2026." Point-in-time membership is not used; the bias is stated as a limitation. | `universe.py`, prereg §8 |
 | I5 | Ticker changes, share classes, delistings | Important | FB became META; GOOG/GOOGL are one company with two tickers (double counting); delisted names can't be priced. | Key everything by CIK. Keep one share class per CIK (list in config). Every drop is logged with a reason. | `universe.py`, `schema.EXCLUSION_REASONS` |
 | I6 | Plan B changes what we measure | Important | A two-day window adds a day of ordinary noise and measures a 2-day move, not the earnings-day move. The claim must change with it. | Plan B uses the 2-day definition for the target AND the history inputs, is never mixed with plan A rows, is chosen at the timing check before any model sees real targets, and the claim is reworded to "2-day earnings-window move." | prereg §2, §4 |
 | I7 | Yahoo and EDGAR data change between downloads | Important | Re-downloads can differ (corrections, re-adjustments), so "rerun from scratch" could legitimately give different numbers and nobody could tell a bug from drift. | Immutable dated snapshots, `data/MANIFEST.json` checksums, pinned versions, fixed seed, deterministic LightGBM (`deterministic`, `force_row_wise`, 1 thread). Rerun test uses the shared snapshot and must reproduce the predictions exactly. | `repro/manifest.py`, `requirements.txt`, Makefile `rerun-check` |
@@ -38,7 +38,7 @@ We ran the skeptical-reviewer checklist (fake signal, leakage, biased evaluation
 - [ ] LightGBM trained with L1 loss and the locked settings, no tuning
 - [ ] Every dev run is in `results/ledger.csv`, including the bad ones
 - [ ] Lockbox opened once from a `model-final` commit; any rerun reported next to it
-- [ ] Headline uses the week-cluster 95% range and the 3% bar; company-cluster and point-in-time results reported alongside
+- [ ] Headline uses the week-cluster 95% range and the 3% bar; company-cluster result reported alongside
 - [ ] Shrinkage diagnostic reported; "beyond shrinkage" only if its range is above 0
 - [ ] Independent rerun from the shared snapshot reproduces the lockbox predictions exactly
 
@@ -51,7 +51,7 @@ We ran the skeptical-reviewer checklist (fake signal, leakage, biased evaluation
 5. **Dev:** quarterly walk-forward 2022Q1 to 2024Q4, everything logged.
 6. **Test:** quarterly walk-forward over the locked Jan 2025 to Sep 2026 set, opened once.
 7. **Inference:** relative MAE improvement, 95% week-cluster bootstrap range (2,000 resamples, seed 2026), success = point >= 3% and lower bound > 0.
-8. **Diagnostics (pre-specified, not headline):** company-cluster range, point-in-time members only, shrunk baseline, by sector, by VIX bucket.
-9. **Live:** two frozen drops forecasting every company, scored by rule, reported as a sanity check only.
+8. **Diagnostics (pre-specified, not headline):** company-cluster range, shrunk baseline, by sector, by VIX bucket.
+9. **Live:** one frozen drop (cutoff Oct 30, 2026) forecasting every company, scored by rule, reported as a sanity check only.
 
 The exact preregistration wording is in [PREREGISTRATION.md](PREREGISTRATION.md).
