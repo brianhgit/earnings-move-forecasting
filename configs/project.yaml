@@ -13,8 +13,8 @@ universe:
   share_class_keep: [GOOGL, FOXA, NWSA, BRK-B, BF-B]
 
 data:
-  prices_snapshot: null           # recorded after the full price download (folder name YYYYMMDD)
-  edgar_snapshot: null             # same, for data/raw/edgar/
+  prices_snapshot: "20261021"           # recorded after the full price download (folder name YYYYMMDD)
+  edgar_snapshot: "20261021"             # same, for data/raw/edgar/
 
 dates:
   edgar_start: "2017-01-01"        # history needed for the last-8 features
