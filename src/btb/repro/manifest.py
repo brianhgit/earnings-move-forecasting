@@ -37,7 +37,7 @@ def scan() -> dict[str, dict]:
     files = {}
     for p in sorted(RAW.rglob("*")):
         if p.is_file() and not p.name.startswith("."):
-            files[str(p.relative_to(DATA))] = {"sha256": _sha(p), "bytes": p.stat().st_size}
+            files[p.relative_to(DATA).as_posix()] = {"sha256": _sha(p), "bytes": p.stat().st_size}
     return files
 
 
@@ -61,10 +61,12 @@ def write() -> dict:
 
 def verify() -> list[str]:
     man = json.loads(MANIFEST.read_text())
+    # manifests written on Windows before keys were made POSIX use "\" separators
+    want = {k.replace("\\", "/"): v for k, v in man["files"].items()}
     now = scan()
-    problems = [f"missing: {k}" for k in man["files"] if k not in now]
-    problems += [f"changed: {k}" for k, v in man["files"].items() if k in now and now[k]["sha256"] != v["sha256"]]
-    problems += [f"extra (not in manifest): {k}" for k in now if k not in man["files"]]
+    problems = [f"missing: {k}" for k in want if k not in now]
+    problems += [f"changed: {k}" for k, v in want.items() if k in now and now[k]["sha256"] != v["sha256"]]
+    problems += [f"extra (not in manifest): {k}" for k in now if k not in want]
     mine = versions()
     problems += [f"version {k}: manifest {v} vs yours {mine.get(k)}" for k, v in man["versions"].items()
                  if k in PACKAGES and v != mine.get(k)]
