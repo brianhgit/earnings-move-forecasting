@@ -77,7 +77,7 @@ from __future__ import annotations
  
 import datetime as dt
 import json
-#from pathlib import Path
+from pathlib import Path
  
 import numpy as np
 import pandas as pd
@@ -87,11 +87,7 @@ from btb.config import INTERIM, PROCESSED, RESULTS, load
 from btb.features import price, history
 from btb.dataset import windows
  
-#constants                         # cfg event.dedupe_days
-MIN_REPORT_DATE = pd.Timestamp("2019-01-01")
-TRAIN_END = pd.Timestamp("2021-12-31")   # before 2022  -> train_only
-DEV_END = pd.Timestamp("2024-12-31")     # through 2024 -> dev
-LOCKBOX_END = pd.Timestamp("2026-09-30") # through Sep 30 2026 -> lockbox, after -> live
+#constants                         
 SPLITS = ("train_only", "dev", "lockbox", "live")
  
 EXCLUSION_COLS = ["cik", "ticker", "accession", "accept_ts_et", "reason", "detail"]
@@ -133,12 +129,17 @@ def _in_index(membership: pd.DataFrame, ticker: str, cutoff: pd.Timestamp) -> bo
     return bool(ok.any())
  
  
-def _split_for(day: pd.Timestamp) -> str:
-    if day <= TRAIN_END:
+def _split_for(day: pd.Timestamp, cfg: dict | None = None) -> str:
+    cfg = cfg if cfg is not None else load()
+    dates = cfg["dates"]
+
+    day = pd.Timestamp(day)
+
+    if day < pd.Timestamp(dates["dev_folds_start"]):
         return "train_only"
-    if day <= DEV_END:
+    if day <= pd.Timestamp(dates["dev_end"]):
         return "dev"
-    if day <= LOCKBOX_END:
+    if day <= pd.Timestamp(dates["lockbox_end"]):
         return "lockbox"
     return "live"
  
@@ -158,6 +159,9 @@ def build_events(
     burst_days = cfg["event"]["burst_days"]
     min_prior = cfg["event"]["min_prior_events"]
     exclusions: list[dict] = []
+
+    """Steps 1 to 10 above. plan defaults to cfg["event"]["timing_plan"].
+    Returns (events, exclusions). Exclusion columns: cik, ticker, accession, accept_ts_et, reason, detail."""
  
     def exclude(row, reason: str, detail: str = "") -> None:
         exclusions.append(
@@ -286,7 +290,7 @@ def build_events(
             ]
  
         # STEP 9: silent drop before 2019, then insufficient history, then split.
-        df = df[df["report_date"] >= MIN_REPORT_DATE].copy()
+        df = df[df["report_date"] >= cfg["dates"]["events_start"]].copy()
         short = df["n_prior"] < min_prior
         for _, row in df[short].iterrows():
             exclude(row, "insufficient_history", f"n_prior={int(row['n_prior'])}")
@@ -337,6 +341,8 @@ def _build_report(events: pd.DataFrame, exclusions: pd.DataFrame) -> dict:
  
  
 def build() -> None:
+    """Read data/interim/{universe,filings,prices}.parquet, call build_events, write the outputs listed above."""
+
     cfg = load()
     universe = pd.read_parquet(INTERIM / "universe.parquet")
     filings = pd.read_parquet(INTERIM / "filings.parquet")
@@ -361,7 +367,8 @@ def build() -> None:
     (RESULTS / "build_report.json").write_text(
         json.dumps(_build_report(events, exclusions), indent=2)
     )
- 
+    print(f"kept {len(events)} reports, dropped {len(exclusions)}")
  
 if __name__ == "__main__":
     build()
+

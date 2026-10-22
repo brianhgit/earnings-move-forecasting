@@ -59,6 +59,7 @@ class Excluded(Exception):
 
 
 def assign_window(accept_ts_et: dt.datetime, plan: str = "A") -> Window:
+    """accept_ts_et is a naive or tz-aware America/New_York timestamp."""
     if plan not in ("A", "B"):
         raise ValueError(f"Unknown plan: {plan!r}")
 
