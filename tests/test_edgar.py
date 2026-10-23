@@ -28,6 +28,8 @@ def _write_snapshot(folder):
         ("10-Q", "", "2024-07-19T20:00:00.000Z", "A-10q"),
         ("8-K", "2.02", "2019-04-16T20:02:00.000Z", "A-dup"),             # also on the older page
     ])
+    recent["filingDate"] = ["2024-07-18", "2024-01-23", "2024-07-19", "2024-05-01", "2024-03-01",
+                            "2024-07-19", "2019-04-16"]
     older = _cols([
         ("8-K", " 9.01 , 2.02 ", "2019-04-16T20:02:00.000Z", "A-dup"),
         ("8-K", "2.02", "2016-10-17T20:01:00.000Z", "A-2016"),            # before edgar_start
@@ -201,3 +203,9 @@ def test_header_fetch_falls_back_and_logs_failures(tmp_path, monkeypatch):
     assert fails == ["A-2017"]
     times = edgar._read_accept_file(snap / edgar.ACCEPT_FILE)
     assert times["A-dup"] == "2019-04-16 16:02:00"
+
+
+def test_parse_periodic_reads_10q_and_10k_dates(tmp_path):
+    _write_snapshot(tmp_path)
+    per = edgar.parse_periodic(tmp_path)
+    assert per.to_dict("records") == [{"cik": 42, "form": "10-Q", "filing_date": pd.Timestamp("2024-07-19")}]

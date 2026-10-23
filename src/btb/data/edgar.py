@@ -209,6 +209,28 @@ def _read_earnings_filings(snapshot_dir) -> "pd.DataFrame":  # noqa: F821
     return df[keep].drop_duplicates("accession").copy()
 
 
+PERIODIC_FORMS = ("10-Q", "10-K")
+
+
+def parse_periodic(snapshot_dir) -> "pd.DataFrame":  # noqa: F821
+    """10-Q and 10-K filing dates (cik, form, filing_date) from one raw snapshot folder.
+    The build uses them to tell a quarter's earnings release from later Item 2.02 side news.
+    filingDate is a plain date, so the acceptance-time issue does not touch it."""
+    rows = []
+    for path in sorted(Path(snapshot_dir).glob("CIK*.json")):
+        data = json.loads(path.read_text(encoding="utf-8"))
+        cols = data["filings"]["recent"] if "filings" in data else data
+        cik = int(re.match(r"CIK(\d{10})", path.name).group(1))
+        for acc, form, day in zip(cols.get("accessionNumber", []), cols.get("form", []),
+                                  cols.get("filingDate", [])):
+            if form in PERIODIC_FORMS:
+                rows.append((cik, acc, form, day))
+    df = pd.DataFrame(rows, columns=["cik", "accession", "form", "filing_date"]).drop_duplicates("accession")
+    df["filing_date"] = pd.to_datetime(df["filing_date"])
+    return (df[["cik", "form", "filing_date"]].astype({"cik": "int64"})
+            .sort_values(["cik", "filing_date"], kind="stable").reset_index(drop=True))
+
+
 def _read_accept_file(path: Path) -> dict[str, str]:
     if not path.exists():
         return {}
@@ -351,7 +373,9 @@ def main() -> None:
         df = parse_filings(RAW / "edgar" / a.accept_times)
         INTERIM.mkdir(parents=True, exist_ok=True)
         df.to_parquet(INTERIM / "filings.parquet", index=False)
-        print(f"wrote {len(df)} filings with SEC header times")
+        per = parse_periodic(RAW / "edgar" / a.accept_times)
+        per.to_parquet(INTERIM / "periodic.parquet", index=False)
+        print(f"wrote {len(df)} filings with SEC header times and {len(per)} 10-Q/10-K dates")
         return
     download(a.snapshot, TEST_CIKS if a.test else None)
     df = parse_filings(RAW / "edgar" / a.snapshot)
@@ -360,6 +384,7 @@ def main() -> None:
         return
     INTERIM.mkdir(parents=True, exist_ok=True)
     df.to_parquet(INTERIM / "filings.parquet", index=False)
+    parse_periodic(RAW / "edgar" / a.snapshot).to_parquet(INTERIM / "periodic.parquet", index=False)
     print(f"wrote {len(df)} filings")
 
 

@@ -109,17 +109,23 @@ def test_duplicate_rule_keeps_the_real_report(raw):
     assert kept == ["T-1", "T-4"]   # the Jan 25 press release and the Apr 20 report
 
 
-def test_duplicate_rule_handles_side_news_after_the_report(raw):
-    # Shaped like DTE (a subsidiary's results a week AFTER the real report) and PNC (an extra
-    # filing three weeks after its October report), plus side news before a report like Tesla.
+def test_duplicate_rule_drops_side_news_after_the_quarterly_report(raw):
+    # Shaped like real 2024 cases. DTE: report and 10-Q the same morning, a subsidiary's
+    # results a week later. PNC: report, 10-Q, then another filing. TSLA: delivery numbers
+    # three weeks before the report, 10-Q the day after it.
     u, _, p, _ = raw
-    cik = int(u["cik"].iloc[0])
-    ts = ["2023-02-09 07:05", "2023-03-01 16:20",                     # report, extra after
-          "2023-04-27 07:05", "2023-05-04 16:15",                     # report, extra after
-          "2023-07-03 09:00", "2023-07-27 07:05",                     # extra before, report
-          "2023-10-26 07:05", "2023-11-15 14:15"]                     # report, extra after (newest)
-    f = pd.DataFrame({"cik": cik, "accession": [f"S-{i}" for i in range(len(ts))], "form": "8-K",
-                      "items": "2.02,9.01", "accept_ts_et": pd.to_datetime(ts)})
-    events, excl = build.build_events(u, f, p, plan="A")
-    kept = sorted(set(f["accession"]) - set(excl.loc[excl["reason"] == "duplicate_filing", "accession"]))
-    assert kept == ["S-0", "S-2", "S-5", "S-6"]
+    ciks = [int(c) for c in u["cik"].iloc[:3]]
+    rows = [(ciks[0], "dte-real", "2024-04-25 07:05"), (ciks[0], "dte-gas", "2024-05-02 16:17"),
+            (ciks[1], "pnc-real", "2024-10-15 06:44"), (ciks[1], "pnc-extra", "2024-11-08 14:15"),
+            (ciks[2], "tsla-deliv", "2024-04-02 09:00"), (ciks[2], "tsla-real", "2024-04-23 16:09")]
+    f = pd.DataFrame({"cik": [r[0] for r in rows], "accession": [r[1] for r in rows], "form": "8-K",
+                      "items": "2.02,9.01", "accept_ts_et": pd.to_datetime([r[2] for r in rows])})
+    periodic = pd.DataFrame({"cik": ciks, "form": "10-Q",
+                             "filing_date": pd.to_datetime(["2024-04-25", "2024-11-01", "2024-04-24"])})
+
+    def kept(per):
+        _, excl = build.build_events(u, f, p, plan="A", periodic=per)
+        return sorted(set(f["accession"]) - set(excl.loc[excl["reason"] == "duplicate_filing", "accession"]))
+
+    assert kept(periodic) == ["dte-real", "pnc-real", "tsla-real"]
+    assert kept(None) == ["dte-gas", "pnc-extra", "tsla-real"]   # without 10-Q dates: last burst
