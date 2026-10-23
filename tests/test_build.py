@@ -107,3 +107,19 @@ def test_duplicate_rule_keeps_the_real_report(raw):
     events, excl = build.build_events(u, f, p, plan="A")
     kept = sorted(set(f["accession"]) - set(excl.loc[excl["reason"] == "duplicate_filing", "accession"]))
     assert kept == ["T-1", "T-4"]   # the Jan 25 press release and the Apr 20 report
+
+
+def test_duplicate_rule_handles_side_news_after_the_report(raw):
+    # Shaped like DTE (a subsidiary's results a week AFTER the real report) and PNC (an extra
+    # filing three weeks after its October report), plus side news before a report like Tesla.
+    u, _, p, _ = raw
+    cik = int(u["cik"].iloc[0])
+    ts = ["2023-02-09 07:05", "2023-03-01 16:20",                     # report, extra after
+          "2023-04-27 07:05", "2023-05-04 16:15",                     # report, extra after
+          "2023-07-03 09:00", "2023-07-27 07:05",                     # extra before, report
+          "2023-10-26 07:05", "2023-11-15 14:15"]                     # report, extra after (newest)
+    f = pd.DataFrame({"cik": cik, "accession": [f"S-{i}" for i in range(len(ts))], "form": "8-K",
+                      "items": "2.02,9.01", "accept_ts_et": pd.to_datetime(ts)})
+    events, excl = build.build_events(u, f, p, plan="A")
+    kept = sorted(set(f["accession"]) - set(excl.loc[excl["reason"] == "duplicate_filing", "accession"]))
+    assert kept == ["S-0", "S-2", "S-5", "S-6"]

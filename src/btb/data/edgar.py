@@ -65,11 +65,14 @@ Backup if the API is slow: https://www.sec.gov/Archives/edgar/daily-index/bulkda
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 import os
 import re
+import threading
 import time
-from datetime import date
+from concurrent.futures import ThreadPoolExecutor
+from datetime import date, datetime
 from pathlib import Path
 
 import pandas as pd
@@ -93,7 +96,20 @@ ACCEPTANCE_TZ = "UTC_TWICE"
 KNOWN_ACCEPTANCE_ET = {
     "0000320193-19-000007": "2019-01-29 16:30:18",   # AAPL, winter
     "0000320193-22-000006": "2022-01-27 16:30:36",   # AAPL, winter
+    "0001628280-24-043432": "2024-10-23 16:09:26",   # TSLA, summer
+    "0001324404-24-000024": "2024-10-30 16:43:01",   # CF, summer (raw value was real UTC)
+    "0000936340-24-000115": "2024-04-25 07:05:24",   # DTE, summer (raw value was real UTC)
 }
+
+# The submissions JSON is not consistent: for some companies acceptanceDateTime is real UTC,
+# for others Eastern plus twice the offset (checked 2026-10-22 against filing pages: TSLA
+# twice, CF and DTE real UTC), so no single ACCEPTANCE_TZ is right for every company. The
+# fix: read each earnings filing's own SEC header, whose ACCEPTANCE-DATETIME is Eastern
+# wall-clock time, into ACCEPT_FILE inside the snapshot folder (python -m btb.data.edgar
+# --accept-times <snapshot>). parse_filings uses that file whenever it exists.
+ACCEPT_FILE = "acceptance_et.csv"
+HEADER_URL = "https://www.sec.gov/Archives/edgar/data/{cik}/{nodash}/{acc}-index-headers.html"
+_ACCEPT_RE = re.compile(r"(?:<|&lt;)ACCEPTANCE-DATETIME(?:>|&gt;)\s*(\d{14})")
 TEST_CIKS = [1065280, 1318605, 320193]   # NFLX, TSLA, AAPL
 
 BASE_URL = "https://data.sec.gov/submissions"
@@ -164,8 +180,8 @@ def _has_item(items: str, item: str) -> bool:
     return item in [s.strip() for s in (items or "").split(",")]
 
 
-def parse_filings(snapshot_dir) -> "pd.DataFrame":  # noqa: F821
-    """Return the "filings" table from one raw snapshot folder. Rules in the module docstring."""
+def _read_earnings_filings(snapshot_dir) -> "pd.DataFrame":  # noqa: F821
+    """8-K item 2.02 rows from one raw snapshot folder, raw acceptanceDateTime, one row per accession."""
     cfg = load()
     paths = sorted(Path(snapshot_dir).glob("CIK*.json"))
     if not paths:
@@ -185,11 +201,99 @@ def parse_filings(snapshot_dir) -> "pd.DataFrame":  # noqa: F821
             "acceptanceDateTime": cols.get("acceptanceDateTime", []),
         }))
     df = pd.concat(frames, ignore_index=True)
-
     keep = df["form"].isin(cfg["event"]["filing_forms"]) & df["items"].map(
         lambda s: _has_item(s, cfg["event"]["required_item"]))
-    df = df[keep].drop_duplicates("accession").copy()
-    df["accept_ts_et"] = _to_eastern(df["acceptanceDateTime"])
+    return df[keep].drop_duplicates("accession").copy()
+
+
+def _read_accept_file(path: Path) -> dict[str, str]:
+    if not path.exists():
+        return {}
+    with open(path, newline="", encoding="utf-8") as f:
+        return {r["accession"]: r["accept_ts_et"] for r in csv.DictReader(f)}
+
+
+def fetch_acceptance_times(snapshot: str, workers: int = 6) -> int:
+    """Write ACCEPT_FILE (accession, accept_ts_et) in the snapshot folder: the ACCEPTANCE-DATETIME
+    from each earnings filing's SEC header (Eastern time). Safe to rerun: accessions already in
+    the file are skipped, so a crash just means running it again. Stays under 10 requests per
+    second across all threads. Returns how many were fetched this run."""
+    snap = RAW / "edgar" / snapshot
+    raw = _read_earnings_filings(snap)
+    start = pd.Timestamp(load()["dates"]["edgar_start"]) - pd.Timedelta(days=2)
+    raw_ts = pd.to_datetime(raw["acceptanceDateTime"], utc=True, format="ISO8601").dt.tz_localize(None)
+    raw = raw[raw_ts >= start]
+    out = snap / ACCEPT_FILE
+    done = _read_accept_file(out)
+    todo = raw[~raw["accession"].isin(done)][["cik", "accession"]].to_dict("records")
+    print(f"{len(done)} already in {ACCEPT_FILE}, fetching {len(todo)}")
+
+    session = requests.Session()
+    session.headers["User-Agent"] = USER_AGENT
+    rate_lock, write_lock = threading.Lock(), threading.Lock()
+    last = [0.0]
+
+    def get(url: str) -> str:
+        for attempt in range(4):
+            with rate_lock:                       # at most one request start per SLEEP_S
+                wait = last[0] + SLEEP_S - time.monotonic()
+                if wait > 0:
+                    time.sleep(wait)
+                last[0] = time.monotonic()
+            try:
+                r = session.get(url, timeout=30)
+                if r.status_code in (429, 500, 502, 503, 504):
+                    raise requests.HTTPError(f"HTTP {r.status_code}")
+                r.raise_for_status()
+                return r.text
+            except requests.RequestException:
+                if attempt == 3:
+                    raise
+                time.sleep(5 * (attempt + 1))
+        raise RuntimeError("unreachable")
+
+    new_file = not out.exists()
+    with open(out, "a", newline="", encoding="utf-8") as f:
+        w = csv.writer(f)
+        if new_file:
+            w.writerow(["accession", "accept_ts_et"])
+        count = [0]
+
+        def one(row: dict) -> None:
+            acc = row["accession"]
+            text = get(HEADER_URL.format(cik=int(row["cik"]), nodash=acc.replace("-", ""), acc=acc))
+            m = _ACCEPT_RE.search(text)
+            if not m:
+                raise ValueError(f"no ACCEPTANCE-DATETIME in the SEC header for {acc}")
+            ts = datetime.strptime(m.group(1), "%Y%m%d%H%M%S")
+            with write_lock:
+                w.writerow([acc, ts.strftime("%Y-%m-%d %H:%M:%S")])
+                f.flush()
+                count[0] += 1
+                if count[0] % 500 == 0:
+                    print(f"{count[0]}/{len(todo)} acceptance times fetched")
+
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            list(pool.map(one, todo))
+    return count[0]
+
+
+def parse_filings(snapshot_dir) -> "pd.DataFrame":  # noqa: F821
+    """Return the "filings" table from one raw snapshot folder. Rules in the module docstring."""
+    cfg = load()
+    df = _read_earnings_filings(snapshot_dir)
+    accept = _read_accept_file(Path(snapshot_dir) / ACCEPT_FILE)
+    if accept:
+        # True Eastern times from each filing's SEC header (see ACCEPT_FILE above).
+        df["accept_ts_et"] = pd.to_datetime(df["accession"].map(accept)).astype("datetime64[us]")
+        raw_ts = pd.to_datetime(df["acceptanceDateTime"], utc=True, format="ISO8601").dt.tz_localize(None)
+        missing = df["accept_ts_et"].isna() & (raw_ts >= pd.Timestamp(cfg["dates"]["edgar_start"]))
+        if missing.any():
+            raise ValueError(f"{int(missing.sum())} filings have no time in {ACCEPT_FILE}; "
+                             f"rerun python -m btb.data.edgar --accept-times <snapshot>")
+        df = df[df["accept_ts_et"].notna()]
+    else:
+        df["accept_ts_et"] = _to_eastern(df["acceptanceDateTime"])
     check_known_times(df)
     df = df[df["accept_ts_et"] >= pd.Timestamp(cfg["dates"]["edgar_start"])]
 
@@ -209,7 +313,17 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--test", action="store_true", help="only the three test companies")
     ap.add_argument("--snapshot", default=date.today().strftime("%Y%m%d"))
+    ap.add_argument("--accept-times", metavar="SNAPSHOT",
+                    help="fetch each filing's true acceptance time for an existing snapshot, "
+                         "then rewrite data/interim/filings.parquet")
     a = ap.parse_args()
+    if a.accept_times:
+        fetch_acceptance_times(a.accept_times)
+        df = parse_filings(RAW / "edgar" / a.accept_times)
+        INTERIM.mkdir(parents=True, exist_ok=True)
+        df.to_parquet(INTERIM / "filings.parquet", index=False)
+        print(f"wrote {len(df)} filings with SEC header times")
+        return
     download(a.snapshot, TEST_CIKS if a.test else None)
     df = parse_filings(RAW / "edgar" / a.snapshot)
     if a.test:
