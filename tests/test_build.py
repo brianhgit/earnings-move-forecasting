@@ -107,3 +107,25 @@ def test_duplicate_rule_keeps_the_real_report(raw):
     events, excl = build.build_events(u, f, p, plan="A")
     kept = sorted(set(f["accession"]) - set(excl.loc[excl["reason"] == "duplicate_filing", "accession"]))
     assert kept == ["T-1", "T-4"]   # the Jan 25 press release and the Apr 20 report
+
+
+def test_duplicate_rule_drops_side_news_after_the_quarterly_report(raw):
+    # Shaped like real 2024 cases. DTE: report and 10-Q the same morning, a subsidiary's
+    # results a week later. PNC: report, 10-Q, then another filing. TSLA: delivery numbers
+    # three weeks before the report, 10-Q the day after it.
+    u, _, p, _ = raw
+    ciks = [int(c) for c in u["cik"].iloc[:3]]
+    rows = [(ciks[0], "dte-real", "2024-04-25 07:05"), (ciks[0], "dte-gas", "2024-05-02 16:17"),
+            (ciks[1], "pnc-real", "2024-10-15 06:44"), (ciks[1], "pnc-extra", "2024-11-08 14:15"),
+            (ciks[2], "tsla-deliv", "2024-04-02 09:00"), (ciks[2], "tsla-real", "2024-04-23 16:09")]
+    f = pd.DataFrame({"cik": [r[0] for r in rows], "accession": [r[1] for r in rows], "form": "8-K",
+                      "items": "2.02,9.01", "accept_ts_et": pd.to_datetime([r[2] for r in rows])})
+    periodic = pd.DataFrame({"cik": ciks, "form": "10-Q",
+                             "filing_date": pd.to_datetime(["2024-04-25", "2024-11-01", "2024-04-24"])})
+
+    def kept(per):
+        _, excl = build.build_events(u, f, p, plan="A", periodic=per)
+        return sorted(set(f["accession"]) - set(excl.loc[excl["reason"] == "duplicate_filing", "accession"]))
+
+    assert kept(periodic) == ["dte-real", "pnc-real", "tsla-real"]
+    assert kept(None) == ["dte-gas", "pnc-extra", "tsla-real"]   # without 10-Q dates: last burst

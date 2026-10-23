@@ -28,6 +28,8 @@ def _write_snapshot(folder):
         ("10-Q", "", "2024-07-19T20:00:00.000Z", "A-10q"),
         ("8-K", "2.02", "2019-04-16T20:02:00.000Z", "A-dup"),             # also on the older page
     ])
+    recent["filingDate"] = ["2024-07-18", "2024-01-23", "2024-07-19", "2024-05-01", "2024-03-01",
+                            "2024-07-19", "2019-04-16"]
     older = _cols([
         ("8-K", " 9.01 , 2.02 ", "2019-04-16T20:02:00.000Z", "A-dup"),
         ("8-K", "2.02", "2016-10-17T20:01:00.000Z", "A-2016"),            # before edgar_start
@@ -126,3 +128,84 @@ def test_known_times_stop_a_wrong_conversion():
     with pytest.raises(ValueError):
         edgar.check_known_times(bad)
     assert edgar.check_known_times(good.assign(accession=["not-a-known-one"])) == 0
+
+
+def test_header_times_fix_inconsistent_raw_times(tmp_path, monkeypatch):
+    # Raw values in this fixture are real UTC; the SEC headers say the true Eastern time.
+    # fetch_acceptance_times writes them once, skips them on a rerun, and parse_filings uses them.
+    snap = tmp_path / "edgar" / "20240101"
+    snap.mkdir(parents=True)
+    _write_snapshot(snap)
+    headers = {"A-summer": "20240718160122", "A-winter": "20240123160500",
+               "A-dup": "20190416160200", "A-2017": "20170118160100"}
+    calls = []
+
+    class FakeSession:
+        def __init__(self):
+            self.headers = {}
+
+        def get(self, url, timeout):
+            acc = url.rsplit("/", 1)[1].replace("-index-headers.html", "")
+            calls.append(acc)
+            return _FakeText(f"&lt;ACCEPTANCE-DATETIME&gt;{headers[acc]}\n")
+
+    monkeypatch.setattr(edgar, "RAW", tmp_path)
+    monkeypatch.setattr(edgar.requests, "Session", FakeSession)
+    monkeypatch.setattr(edgar, "SLEEP_S", 0)
+    assert edgar.fetch_acceptance_times("20240101", workers=2) == 4
+    assert sorted(calls) == sorted(headers)          # 2016 filing, amendment, non-2.02 skipped
+    assert edgar.fetch_acceptance_times("20240101") == 0   # rerun fetches nothing new
+
+    monkeypatch.setattr(edgar, "ACCEPTANCE_TZ", "UTC_TWICE")   # would be wrong; the file wins
+    ts = edgar.parse_filings(snap).set_index("accession")["accept_ts_et"]
+    assert ts["A-summer"] == pd.Timestamp("2024-07-18 16:01:22")
+    assert ts["A-2017"] == pd.Timestamp("2017-01-18 16:01:00")
+
+    lines = (snap / edgar.ACCEPT_FILE).read_text().splitlines()
+    (snap / edgar.ACCEPT_FILE).write_text("\n".join(l for l in lines if "A-winter" not in l) + "\n")
+    with pytest.raises(ValueError):
+        edgar.parse_filings(snap)                       # a missing time stops the parse
+
+
+class _FakeText:
+    status_code = 200
+
+    def __init__(self, text):
+        self.text = text
+
+    def raise_for_status(self):
+        pass
+
+
+def test_header_fetch_falls_back_and_logs_failures(tmp_path, monkeypatch):
+    snap = tmp_path / "edgar" / "20240101"
+    snap.mkdir(parents=True)
+    _write_snapshot(snap)
+    good = {"A-summer": "20240718160122", "A-winter": "20240123160500"}
+
+    class FakeSession:
+        def __init__(self):
+            self.headers = {}
+
+        def get(self, url, timeout):
+            acc = url.rsplit("/", 1)[1].split("-index")[0]
+            if url.endswith("-index-headers.html"):
+                return _FakeText(f"<ACCEPTANCE-DATETIME>{good[acc]}" if acc in good else "<html>no tag</html>")
+            if acc == "A-dup":                       # only the index page has it
+                return _FakeText('<div class="infoHead">Accepted</div>\n<div class="info">2019-04-16 16:02:00</div>')
+            return _FakeText("<html>nothing</html>")   # A-2017: nowhere
+
+    monkeypatch.setattr(edgar, "RAW", tmp_path)
+    monkeypatch.setattr(edgar.requests, "Session", FakeSession)
+    monkeypatch.setattr(edgar, "SLEEP_S", 0)
+    assert edgar.fetch_acceptance_times("20240101", workers=2) == 3
+    fails = pd.read_csv(snap / edgar.FAIL_FILE)["accession"].tolist()
+    assert fails == ["A-2017"]
+    times = edgar._read_accept_file(snap / edgar.ACCEPT_FILE)
+    assert times["A-dup"] == "2019-04-16 16:02:00"
+
+
+def test_parse_periodic_reads_10q_and_10k_dates(tmp_path):
+    _write_snapshot(tmp_path)
+    per = edgar.parse_periodic(tmp_path)
+    assert per.to_dict("records") == [{"cik": 42, "form": "10-Q", "filing_date": pd.Timestamp("2024-07-19")}]
