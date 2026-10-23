@@ -110,6 +110,9 @@ KNOWN_ACCEPTANCE_ET = {
 ACCEPT_FILE = "acceptance_et.csv"
 HEADER_URL = "https://www.sec.gov/Archives/edgar/data/{cik}/{nodash}/{acc}-index-headers.html"
 _ACCEPT_RE = re.compile(r"(?:<|&lt;)ACCEPTANCE-DATETIME(?:>|&gt;)\s*(\d{14})")
+INDEX_URL = "https://www.sec.gov/Archives/edgar/data/{cik}/{nodash}/{acc}-index.htm"
+_INDEX_RE = re.compile(r"Accepted</div>\s*<div class=\"info\">\s*(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})")
+FAIL_FILE = "acceptance_failures.csv"
 TEST_CIKS = [1065280, 1318605, 320193]   # NFLX, TSLA, AAPL
 
 BASE_URL = "https://data.sec.gov/submissions"
@@ -259,13 +262,30 @@ def fetch_acceptance_times(snapshot: str, workers: int = 6) -> int:
             w.writerow(["accession", "accept_ts_et"])
         count = [0]
 
+        failures: list[str] = []
+
+        def find_time(cik: int, acc: str):
+            parts = dict(cik=cik, nodash=acc.replace("-", ""), acc=acc)
+            for _ in range(2):                    # the header page, twice (a bad response can be temporary)
+                m = _ACCEPT_RE.search(get(HEADER_URL.format(**parts)))
+                if m:
+                    return datetime.strptime(m.group(1), "%Y%m%d%H%M%S")
+            try:                                  # then the filing's index page ("Accepted" field)
+                m = _INDEX_RE.search(get(INDEX_URL.format(**parts)))
+            except requests.RequestException:
+                m = None
+            return datetime.strptime(m.group(1), "%Y-%m-%d %H:%M:%S") if m else None
+
         def one(row: dict) -> None:
             acc = row["accession"]
-            text = get(HEADER_URL.format(cik=int(row["cik"]), nodash=acc.replace("-", ""), acc=acc))
-            m = _ACCEPT_RE.search(text)
-            if not m:
-                raise ValueError(f"no ACCEPTANCE-DATETIME in the SEC header for {acc}")
-            ts = datetime.strptime(m.group(1), "%Y%m%d%H%M%S")
+            try:
+                ts = find_time(int(row["cik"]), acc)
+            except requests.RequestException:
+                ts = None
+            if ts is None:
+                with write_lock:
+                    failures.append(acc)
+                return
             with write_lock:
                 w.writerow([acc, ts.strftime("%Y-%m-%d %H:%M:%S")])
                 f.flush()
@@ -275,6 +295,12 @@ def fetch_acceptance_times(snapshot: str, workers: int = 6) -> int:
 
         with ThreadPoolExecutor(max_workers=workers) as pool:
             list(pool.map(one, todo))
+    if failures:
+        pd.DataFrame({"accession": sorted(failures)}).to_csv(snap / FAIL_FILE, index=False)
+        print(f"{len(failures)} filings had no acceptance time on the SEC site; listed in {FAIL_FILE}. "
+              f"Run the same command again to retry them.")
+    elif (snap / FAIL_FILE).exists():
+        (snap / FAIL_FILE).unlink()
     return count[0]
 
 
@@ -319,6 +345,9 @@ def main() -> None:
     a = ap.parse_args()
     if a.accept_times:
         fetch_acceptance_times(a.accept_times)
+        if (RAW / "edgar" / a.accept_times / FAIL_FILE).exists():
+            print("Not rewriting filings.parquet until every filing has a time.")
+            return
         df = parse_filings(RAW / "edgar" / a.accept_times)
         INTERIM.mkdir(parents=True, exist_ok=True)
         df.to_parquet(INTERIM / "filings.parquet", index=False)

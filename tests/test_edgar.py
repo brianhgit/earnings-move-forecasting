@@ -173,3 +173,31 @@ class _FakeText:
 
     def raise_for_status(self):
         pass
+
+
+def test_header_fetch_falls_back_and_logs_failures(tmp_path, monkeypatch):
+    snap = tmp_path / "edgar" / "20240101"
+    snap.mkdir(parents=True)
+    _write_snapshot(snap)
+    good = {"A-summer": "20240718160122", "A-winter": "20240123160500"}
+
+    class FakeSession:
+        def __init__(self):
+            self.headers = {}
+
+        def get(self, url, timeout):
+            acc = url.rsplit("/", 1)[1].split("-index")[0]
+            if url.endswith("-index-headers.html"):
+                return _FakeText(f"<ACCEPTANCE-DATETIME>{good[acc]}" if acc in good else "<html>no tag</html>")
+            if acc == "A-dup":                       # only the index page has it
+                return _FakeText('<div class="infoHead">Accepted</div>\n<div class="info">2019-04-16 16:02:00</div>')
+            return _FakeText("<html>nothing</html>")   # A-2017: nowhere
+
+    monkeypatch.setattr(edgar, "RAW", tmp_path)
+    monkeypatch.setattr(edgar.requests, "Session", FakeSession)
+    monkeypatch.setattr(edgar, "SLEEP_S", 0)
+    assert edgar.fetch_acceptance_times("20240101", workers=2) == 3
+    fails = pd.read_csv(snap / edgar.FAIL_FILE)["accession"].tolist()
+    assert fails == ["A-2017"]
+    times = edgar._read_accept_file(snap / edgar.ACCEPT_FILE)
+    assert times["A-dup"] == "2019-04-16 16:02:00"
