@@ -77,7 +77,6 @@ from __future__ import annotations
  
 import datetime as dt
 import json
-from pathlib import Path
  
 import numpy as np
 import pandas as pd
@@ -153,15 +152,14 @@ def build_events(
     plan: str | None = None,
     cfg: dict | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Steps 1 to 10 above. plan defaults to cfg["event"]["timing_plan"].
+    Returns (events, exclusions). Exclusion columns: cik, ticker, accession, accept_ts_et, reason, detail."""
     cfg = cfg if cfg is not None else load()
     plan = plan if plan is not None else cfg["event"]["timing_plan"]
     dedupe_days = cfg["event"]["dedupe_days"]
     burst_days = cfg["event"]["burst_days"]
     min_prior = cfg["event"]["min_prior_events"]
     exclusions: list[dict] = []
-
-    """Steps 1 to 10 above. plan defaults to cfg["event"]["timing_plan"].
-    Returns (events, exclusions). Exclusion columns: cik, ticker, accession, accept_ts_et, reason, detail."""
  
     def exclude(row, reason: str, detail: str = "") -> None:
         exclusions.append(
@@ -264,11 +262,19 @@ def build_events(
         df = history.add_history_features(df)
  
         # STEP 7: price features, all years. Excluded("price_gap") -> exclusions.
+        # Split prices by ticker once (plus ^VIX), so each call scans ~2,500 rows, not ~1.3M.
+        prices_dt = prices.assign(date=pd.to_datetime(prices["date"]))
+        vix = prices_dt[prices_dt["ticker"] == "^VIX"]
+        by_ticker = {t: pd.concat([g, vix]) for t, g in prices_dt.groupby("ticker", sort=False)}
         keep_idx, feats = [], []
         for idx, row in df.iterrows():
             try:
                 feats.append(
-                    price.price_features(prices, row["yahoo_ticker"], row["cutoff_date"].date())
+                    price.price_features(
+                        by_ticker.get(row["yahoo_ticker"], vix),
+                        row["yahoo_ticker"],
+                        row["cutoff_date"].date(),
+                    )
                 )
                 keep_idx.append(idx)
             except windows.Excluded as e:
@@ -295,7 +301,7 @@ def build_events(
         for _, row in df[short].iterrows():
             exclude(row, "insufficient_history", f"n_prior={int(row['n_prior'])}")
         df = df[~short].copy()
-        df["split"] = df["report_date"].map(_split_for)
+        df["split"] = df["report_date"].map(lambda d: _split_for(d, cfg))
  
         # STEP 10: final columns, types, order
         df["event_id"] = df["cik"].astype(str) + "-" + df["accession"].astype(str)
@@ -371,4 +377,3 @@ def build() -> None:
  
 if __name__ == "__main__":
     build()
-
