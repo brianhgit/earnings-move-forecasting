@@ -316,8 +316,7 @@ def ledger_progress(ledger: pd.DataFrame) -> go.Figure:
     things we tried before locking the model."""
     df = ledger.copy()
 
-    if "split" in df.columns:
-        df = df[df["split"] == "DEV"].copy()
+    df = df[df["kind"] == "dev"].copy()
 
     df = df.reset_index(drop=True)
     df["run_number"] = np.arange(1, len(df) + 1)
