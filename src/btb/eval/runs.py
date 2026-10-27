@@ -70,9 +70,9 @@ def write_run(*, name: str, kind: str, data_source: str, predictions: pd.DataFra
         "git_sha": sha, "git_dirty": dirty, "config_hash": config_hash(), "data_hash": data_hash,
         "note": note,
     }
-    (out / "run.json").write_text(json.dumps(meta, indent=2))
+    (out / "run.json").write_text(json.dumps(meta, indent=2), newline="\n")
     predictions.to_parquet(out / "predictions.parquet", index=False)
-    (out / "metrics.json").write_text(json.dumps(metrics, indent=2, default=float))
+    (out / "metrics.json").write_text(json.dumps(metrics, indent=2, default=float), newline="\n")
 
     head, ci = metrics["overall"], metrics.get("bootstrap_week", {})
     row = {
@@ -87,7 +87,7 @@ def write_run(*, name: str, kind: str, data_source: str, predictions: pd.DataFra
     }
     ledger = root / "ledger.csv"
     ledger.parent.mkdir(parents=True, exist_ok=True)
-    pd.DataFrame([row], columns=LEDGER_COLUMNS).to_csv(ledger, mode="a", header=not ledger.exists(), index=False)
+    pd.DataFrame([row], columns=LEDGER_COLUMNS).to_csv(ledger, mode="a", header=not ledger.exists(), index=False, lineterminator="\n")
     return out
 
 

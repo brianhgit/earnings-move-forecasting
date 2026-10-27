@@ -1,14 +1,14 @@
 # Preregistration: Beat the Baseline
 
-**Status: DRAFT.** Locked by tagging the commit `prereg-v1` after the timing check (§2) and before the model is run on any real target. After that, nothing in this file changes. Any later change is written in the "Changes after locking" section with the date and reason, and both versions of the result are reported.
+**Status: LOCKED** (tag `prereg-v1`, Oct 27, 2026; timing plan B). Locked by tagging the commit `prereg-v1` after the timing check (§2) and before the model is run on any real target. After that, nothing in this file changes. Any later change is written in the "Changes after locking" section with the date and reason, and both versions of the result are reported.
 
 Settings referenced here live in `configs/project.yaml` (marked LOCKED there).
 
 ## 1. Question and claim
 
-Can a LightGBM model using 9 simple inputs forecast the **size** of an S&P 500 stock's market-adjusted earnings-day move more accurately (lower mean absolute error) than the median of that stock's last 8 earnings moves, using only information available at the Friday close before the report week?
+Can a LightGBM model using 9 simple inputs forecast the **size** of an S&P 500 stock's market-adjusted 2-day earnings-window move (timing plan B, §2) more accurately (lower mean absolute error) than the median of that stock's last 8 earnings moves, using only information available at the Friday close before the report week?
 
-If the success rule in §9 is met, the claim we will make is exactly: *"On S&P 500 members as of Oct 9, 2026, over Jan 2025 to Sep 2026, our model's average miss was X% smaller than the simple guess (95% range A% to B%)."* We will not say "edge," "alpha," or anything about trading.
+If the success rule in §9 is met, the claim we will make is exactly: *"On S&P 500 members as of Oct 9, 2026, over Jan 2025 to Sep 2026, our model's average miss on the 2-day earnings-window move was X% smaller than the simple guess (95% range A% to B%)."* We will not say "edge," "alpha," or anything about trading.
 
 ## 2. Event definition
 
@@ -26,6 +26,8 @@ The announcement time is the filing's EDGAR acceptance time in US Eastern time, 
 - Filings: at least 90% of company-quarters have exactly one Item 2.02 filing.
 
 Use Plan A if precision >= 57/60 AND recall >= 27/30 AND filings >= 90%. Otherwise use Plan B if, re-scored with Plan B windows, precision >= 57/60 AND recall >= 27/30. Otherwise Plan D: the project becomes a study of how reliable free earnings-timing data is, plus baseline forecasts on the 29 company-confirmed reports. We report the Wilson 95% lower bound for each proportion alongside the count.
+
+**Timing plan used: B.** Hand check of Oct 26, 2026: precision 60/60 under plan A and 59/60 under plan B; recall 26/29 under plan A (below 27/30) and 27/29 under plan B; filings 92.8% with exactly one. Rows and reasons in `audit/`, decision in DECISIONS.md.
 
 ## 3. Universe and exclusions
 
@@ -69,7 +71,7 @@ Project success does not depend on model success: a clean negative result report
 
 ## 10. Live protocol
 
-One forecast drop is evaluated (cutoff Oct 30, 2026; post deadline Sun Nov 1 21:00 PT), plus an extra demonstration drop (cutoff Nov 13) that is not part of this evaluation. Drops with cutoffs Oct 16 and Oct 23 were planned but not run; nothing from them is scored. Each drop forecasts every universe company with enough history, using a model trained once per drop on every event completed by the cutoff. The file is frozen and its SHA-256 posted publicly and attached to a GitHub Release before the deadline. A drop posted late is void.
+One forecast drop is evaluated (cutoff Oct 30, 2026; post deadline Sun Nov 1 21:00 PT), plus an extra demonstration drop (cutoff Nov 13) that is not part of this evaluation. Drops with cutoffs Oct 16 and Oct 23 were planned but not run; nothing from them is scored. Each drop forecasts every universe company with enough history, using a model trained once per drop on every event completed by the cutoff that is in the frozen data (report dates through Sep 30, 2026; reports from Oct 1 to the cutoff are not in the frozen snapshot and are not used for training or history). "Enough history" for a live forecast means at least 8 earlier reports in those frozen event tables, which hold scored reports from 2019 on; a few newer companies (listed since about 2023) therefore get no live forecast, and the `n_prior` column in the forecast file counts those table rows. The file is frozen and its SHA-256 posted publicly and attached to a GitHub Release before the deadline. A drop posted late is void.
 
 An event is scored if its company has a forecast row, its EDGAR acceptance time is after the freeze, its report date is inside the drop's window (Nov 2 to 6), and it passes the §3 rules. Everything else is listed as unscored with a reason. Nothing is backfilled. Live results are descriptive: their interval resamples trading days and is not used for the §9 decision.
 
@@ -83,4 +85,4 @@ Counts kept and dropped by reason and year; both hand-check tallies; every dev r
 |---|---|---|---|
 | | | | |
 
-Locked by: ______  Commit: ______  Date: ______
+Locked by: the team  Commit: tag `prereg-v1`  Date: 2026-10-27

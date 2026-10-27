@@ -2,7 +2,7 @@
 
 Can a machine learning model forecast how large an S&P 500 stock's move will be after an earnings announcement more accurately than the stock's own historical typical move?
 
-This project forecasts the **size** (not the direction) of earnings-day stock moves for S&P 500 companies. A LightGBM model is compared against a simple historical baseline on seven years of earnings reports, using a preregistered evaluation with a held-out test set that is opened once, uncertainty estimates that account for market-wide correlation, and live forecasts published before the reports they predict.
+This project forecasts the **size** (not the direction) of 2-day earnings-window stock moves for S&P 500 companies. A LightGBM model is compared against a simple historical baseline on seven years of earnings reports, using a preregistered evaluation with a held-out test set that is opened once, uncertainty estimates that account for market-wide correlation, and live forecasts published before the reports they predict.
 
 ## Approach
 

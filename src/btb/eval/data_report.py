@@ -28,6 +28,10 @@ Sections:
                    or in_our_table_yes_no == "market hours" (released 9:30 to 4 ET, which
                    plan A excludes on purpose), out of rows with release_found_yes_no == "yes"
                    (target 27/30). For plan B, "market hours" rows need correct_window_plan_b.
+                   in_our_table_yes_no == "plan B only" means plan A excluded the filing as
+                   market hours although the release came out outside market hours (8-K
+                   filed later): a plan A miss, but plan B keeps it, so it counts for plan B
+                   when correct_window_plan_b == "yes".
      Compare answers case-insensitively and ignore spaces.
      Show each as k/n with its wilson_lower(k, n). Same for plan B columns.
   3. Timing sanity check (real only): for each kept report, compare |ret_stock| with the
@@ -147,7 +151,7 @@ def hand_check() -> pd.DataFrame | str:
         if plan == "a":
             hit = ((in_table == "yes") & ok_r) | (in_table == "markethours")
         else:
-            hit = in_table.isin(["yes", "markethours"]) & ok_r
+            hit = in_table.isin(["yes", "markethours", "planbonly"]) & ok_r
         for check, k, n in (("precision", int(ok_p.sum()), len(prec)),
                             ("recall", int(hit.sum()), len(rec))):
             tk, tn = TARGETS[check]
@@ -242,7 +246,7 @@ def build(data: str, cfg: dict | None = None) -> Path:
         lines += [res.round(3).to_markdown(), "", f"Chart: [data_report/{key}.html](data_report/{key}.html)", ""]
 
     out = root / "data_report.md"
-    out.write_text("\n".join(lines), encoding="utf-8")
+    out.write_text("\n".join(lines), encoding="utf-8", newline="\n")
     return out
 
 

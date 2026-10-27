@@ -31,7 +31,7 @@ event:
   dedupe_days: 45                  # LOCKED. Item 2.02 filings within 45 days are one report window
   burst_days: 3                    # LOCKED. Filings within 3 days are one burst; its first filing stands for it
   market_open_et: "09:30"
-  timing_plan: A                   # A or B, set by the timing hand check, then LOCKED
+  timing_plan: B                   # A or B, set by the timing hand check, then LOCKED (B, 2026-10-26)
   min_prior_events: 8              # LOCKED. Fewer than 8 completed prior reports = not scored (both predictors)
 
 target:

@@ -1,0 +1,7 @@
+# Frozen forecast files are hashed byte for byte, so never convert their line endings
+live/drops/** -text
+# Result files are stored with LF (the code writes LF on every OS)
+results/*.json text eol=lf
+results/*.csv text eol=lf
+results/runs/*/*.json text eol=lf
+results/lockbox/*.json text eol=lf

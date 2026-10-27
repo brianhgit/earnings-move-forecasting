@@ -43,8 +43,8 @@ def freeze(drop_id: str, data_source: str = "real", now: datetime | None = None)
         "frozen_utc": now.isoformat(timespec="seconds"), "post_by": d["post_by"],
         "on_time": bool(pd.Timestamp(now) <= deadline), "window": d["window"],
     }
-    (out / "FREEZE.json").write_text(json.dumps(rec, indent=2))
-    (out / "forecasts.sha256").write_text(f"{rec['sha256']}  forecasts.csv\n")
+    (out / "FREEZE.json").write_text(json.dumps(rec, indent=2), newline="\n")
+    (out / "forecasts.sha256").write_text(f"{rec['sha256']}  forecasts.csv\n", newline="\n")
     return rec
 
 
