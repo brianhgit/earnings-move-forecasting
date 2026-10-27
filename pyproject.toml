@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "btb"
 version = "0.1.0"
-description = "Forecasting the size of S&P 500 earnings-day stock moves"
+description = "Forecasting the size of S&P 500 2-day earnings-window stock moves"
 requires-python = ">=3.11"
 
 [tool.setuptools.packages.find]

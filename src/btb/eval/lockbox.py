@@ -58,7 +58,7 @@ def main(argv=None):
     history = json.loads(marker.read_text())["openings"] if marker.exists() else []
     history.append({"run_id": out.name, "opened_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
                     "git_sha": runs.git_info()[0], "config_hash": config_hash(), "reason": a.rerun_reason or "first opening"})
-    marker.write_text(json.dumps({"openings": history}, indent=2))
+    marker.write_text(json.dumps({"openings": history}, indent=2), newline="\n")
 
     w = met["bootstrap_week"]
     print(f"LOCKBOX {out.name}: improvement {w['point']:+.1%}  95% range [{w['ci_low']:+.1%}, {w['ci_high']:+.1%}]")

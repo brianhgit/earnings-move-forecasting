@@ -55,7 +55,7 @@ def write() -> dict:
     files = scan()
     man = {"created_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
            "n_files": len(files), "files": files, "versions": versions()}
-    MANIFEST.write_text(json.dumps(man, indent=2))
+    MANIFEST.write_text(json.dumps(man, indent=2), newline="\n")
     return man
 
 

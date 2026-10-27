@@ -405,7 +405,7 @@ def build() -> None:
     )
     exclusions.to_csv(PROCESSED / "exclusions.csv", index=False)
     (RESULTS / "build_report.json").write_text(
-        json.dumps(_build_report(events, exclusions), indent=2)
+        json.dumps(_build_report(events, exclusions), indent=2), newline="\n"
     )
     print(f"kept {len(events)} reports, dropped {len(exclusions)}")
  
