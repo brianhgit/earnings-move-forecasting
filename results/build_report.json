@@ -1,0 +1,191 @@
+{
+  "kept_by_split": {
+    "train_only": 5372,
+    "dev": 5671,
+    "lockbox": 3382,
+    "live": 66
+  },
+  "kept_by_year": {
+    "2019": 1745,
+    "2020": 1794,
+    "2021": 1833,
+    "2022": 1855,
+    "2023": 1902,
+    "2024": 1914,
+    "2025": 1924,
+    "2026": 1524
+  },
+  "dropped_by_reason": {
+    "duplicate_filing": 1116,
+    "insufficient_history": 374,
+    "missing_price": 41,
+    "price_gap": 33
+  },
+  "dropped_by_reason_year": [
+    {
+      "reason": "duplicate_filing",
+      "year": 2017,
+      "n": 121
+    },
+    {
+      "reason": "duplicate_filing",
+      "year": 2018,
+      "n": 117
+    },
+    {
+      "reason": "duplicate_filing",
+      "year": 2019,
+      "n": 112
+    },
+    {
+      "reason": "duplicate_filing",
+      "year": 2020,
+      "n": 173
+    },
+    {
+      "reason": "duplicate_filing",
+      "year": 2021,
+      "n": 88
+    },
+    {
+      "reason": "duplicate_filing",
+      "year": 2022,
+      "n": 103
+    },
+    {
+      "reason": "duplicate_filing",
+      "year": 2023,
+      "n": 94
+    },
+    {
+      "reason": "duplicate_filing",
+      "year": 2024,
+      "n": 107
+    },
+    {
+      "reason": "duplicate_filing",
+      "year": 2025,
+      "n": 107
+    },
+    {
+      "reason": "duplicate_filing",
+      "year": 2026,
+      "n": 94
+    },
+    {
+      "reason": "insufficient_history",
+      "year": 2019,
+      "n": 77
+    },
+    {
+      "reason": "insufficient_history",
+      "year": 2020,
+      "n": 63
+    },
+    {
+      "reason": "insufficient_history",
+      "year": 2021,
+      "n": 59
+    },
+    {
+      "reason": "insufficient_history",
+      "year": 2022,
+      "n": 54
+    },
+    {
+      "reason": "insufficient_history",
+      "year": 2023,
+      "n": 22
+    },
+    {
+      "reason": "insufficient_history",
+      "year": 2024,
+      "n": 36
+    },
+    {
+      "reason": "insufficient_history",
+      "year": 2025,
+      "n": 42
+    },
+    {
+      "reason": "insufficient_history",
+      "year": 2026,
+      "n": 21
+    },
+    {
+      "reason": "missing_price",
+      "year": 2017,
+      "n": 4
+    },
+    {
+      "reason": "missing_price",
+      "year": 2018,
+      "n": 4
+    },
+    {
+      "reason": "missing_price",
+      "year": 2019,
+      "n": 5
+    },
+    {
+      "reason": "missing_price",
+      "year": 2020,
+      "n": 1
+    },
+    {
+      "reason": "missing_price",
+      "year": 2021,
+      "n": 1
+    },
+    {
+      "reason": "missing_price",
+      "year": 2026,
+      "n": 26
+    },
+    {
+      "reason": "price_gap",
+      "year": 2017,
+      "n": 3
+    },
+    {
+      "reason": "price_gap",
+      "year": 2018,
+      "n": 2
+    },
+    {
+      "reason": "price_gap",
+      "year": 2019,
+      "n": 8
+    },
+    {
+      "reason": "price_gap",
+      "year": 2020,
+      "n": 3
+    },
+    {
+      "reason": "price_gap",
+      "year": 2021,
+      "n": 7
+    },
+    {
+      "reason": "price_gap",
+      "year": 2023,
+      "n": 3
+    },
+    {
+      "reason": "price_gap",
+      "year": 2024,
+      "n": 3
+    },
+    {
+      "reason": "price_gap",
+      "year": 2025,
+      "n": 2
+    },
+    {
+      "reason": "price_gap",
+      "year": 2026,
+      "n": 2
+    }
+  ]
+}
