@@ -12,7 +12,7 @@ This project forecasts the **size** (not the direction) of 2-day earnings-window
 move = 100 × | ln(P_after / P_before) − ln(SPY_after / SPY_before) |
 ```
 
-`P_before` and `P_after` are the adjusted closes immediately before and after the announcement. Announcements before the open use the previous close and that day's close. Announcements after the close use that day's close and the next day's close. Announcement times come from SEC EDGAR filing timestamps, and subtracting SPY's move over the same window removes market-wide moves.
+`P_before` and `P_after` are the adjusted closes of the trading session before and the session after the report date, so each move is a **2-day earnings-window move** that catches the reaction whether the news came out before the open, during the day or after the close. The report date comes from the SEC EDGAR filing timestamp (a weekend or holiday filing counts toward the next session), and subtracting SPY's move over the same window removes market-wide moves. A timing hand check against company press releases chose this 2-day window over a 1-day one (`docs/DECISIONS.md`).
 
 **Baseline.** The median of the company's last 8 earnings moves.
 
@@ -122,7 +122,7 @@ In progress. Results will be reported here, including results that do not favor 
 ## Limitations
 
 - The universe is the S&P 500 as of October 2026, so companies that left the index before then are missing. Point-in-time index membership is not used, so the claim covers today's members only.
-- Announcement times come from EDGAR filing timestamps, which can lag the actual press release. A hand check against press releases decides whether one-day windows are reliable enough to use.
+- Announcement times come from EDGAR filing timestamps, which can lag the actual press release (many companies release before the open and file later in the morning). A hand check against press releases led us to use a 2-day window, which is robust to that lag but adds a day of ordinary market noise to every move.
 - Free price data can contain errors, so missing sessions and suspicious jumps are flagged in the data report.
 - Live results cover a short period of a single market environment, so they are a sanity check rather than the main evidence.
 
