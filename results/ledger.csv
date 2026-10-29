@@ -1,0 +1,2 @@
+run_id,created_utc,kind,data_source,name,author,git_sha,git_dirty,config_hash,data_hash,n_events,n_weeks,mae_baseline,mae_model,rel_improvement,ci_low,ci_high,win_rate,beats_shrinkage,tripwire,note
+20261029-215438_lgbm_v1,2026-10-29T21:54:38+00:00,dev,real,lgbm_v1,,f1902e2,False,f48cdcf9e4c7,63c5b8e03678,5671,151,3.0288,2.9714,0.0189,0.0093,0.0285,0.5271,False,False,"first real run: plan B, locked settings"

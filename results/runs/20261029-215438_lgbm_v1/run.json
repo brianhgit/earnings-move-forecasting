@@ -1,0 +1,13 @@
+{
+  "run_id": "20261029-215438_lgbm_v1",
+  "created_utc": "2026-10-29T21:54:38+00:00",
+  "kind": "dev",
+  "data_source": "real",
+  "name": "lgbm_v1",
+  "author": "",
+  "git_sha": "f1902e2",
+  "git_dirty": false,
+  "config_hash": "f48cdcf9e4c7",
+  "data_hash": "63c5b8e03678",
+  "note": "first real run: plan B, locked settings"
+}
