@@ -2,14 +2,14 @@
 
 This file decides what "the earnings move" means, so it gets the most tests.
 
-Plan A (default):
+Plan A (the 1-day window; the code default when no plan is given):
   BMO  accepted before 09:30 ET on a session      -> before = previous session, after = that session
   AMC  accepted at/after the close on a session   -> before = that session,     after = next session
        (the close is 13:00 on early-close days)
   non-session day (weekend/holiday), any time      -> treat as BMO of the next session
   DMH  accepted 09:30 <= t < close on a session   -> excluded, reason "during_market_hours"
 
-Plan B (only if the timing hand check fails plan A):
+Plan B (the plan in use: chosen by the timing hand check of Oct 26, 2026; configs/project.yaml sets it):
   before = session before report_date, after = session after report_date (two days,
   catches the reaction whichever side it fell on, including DMH). This CHANGES what
   we measure (a 2-day move), so it is reported as a different estimand. See
