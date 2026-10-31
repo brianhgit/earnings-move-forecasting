@@ -1,0 +1,13 @@
+{
+  "run_id": "20261031-185750_lockbox",
+  "created_utc": "2026-10-31T18:57:50+00:00",
+  "kind": "lockbox",
+  "data_source": "real",
+  "name": "lockbox",
+  "author": "",
+  "git_sha": "eaa92c8",
+  "git_dirty": false,
+  "config_hash": "f48cdcf9e4c7",
+  "data_hash": "525501c09096",
+  "note": ""
+}
