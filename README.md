@@ -112,11 +112,12 @@ Every backtest, locked-test opening and live scoring writes a run to `results/` 
 
 ## Status
 
-In progress. Results will be reported here, including results that do not favor the model.
+The final locked test showed a 1.7% relative improvement in MAE over the baseline, below the preregistered 3% success threshold. The model performed better than the baseline, but the result does not meet the official pass criterion.
+
 
 | | Baseline MAE | Model MAE | Improvement (95% interval) |
 |---|---|---|---|
-| Locked test, Jan 2025 to Sep 2026 | | | |
+| Locked test, Jan 2025 to Sep 2026 | 3.50 | 3.44 | 1.7% (0.6% to 2.9%) |
 | Live drop, Nov 2 to 6, 2026 | | | descriptive |
 
 ## Limitations
