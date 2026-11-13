@@ -389,7 +389,6 @@ details .body p{margin:0 0 12px;font-size:18px}
         <p class="gcap" id="gcap"></p>
       </section>
     </div>
-    <aside class="side wk" id="week"></aside>
   </section>
 
   <section class="panel" id="p-past" role="tabpanel" aria-labelledby="tab-past" hidden>
@@ -647,30 +646,6 @@ const WK = (() => {
   return {am, au, k, even, mm, mu, story: even && k.usual > k.model && mm > mu};
 })();
 $('#live1').textContent = WK.even ? 'even on average' : WK.am < WK.au ? 'our model missed less' : 'its usual jump missed less';
-function renderWeek(){
-  const {am, au, k} = WK;
-  const head = WK.even ? 'Even on average' : am < au ? 'Our model missed less' : 'Its usual jump missed less';
-  const P = x => Math.round(x / N * 100);
-  $('#week').innerHTML = `
-    <h3 class="big">${head}<span class="kick">The whole live week</span></h3>
-    <div><div class="pair">
-      <div><span class="num m tnum" data-to="${am.toFixed(2)}">${am.toFixed(2)}%</span><span class="lab m">Our model</span></div>
-      <div><span class="num u tnum" data-to="${au.toFixed(2)}">${au.toFixed(2)}%</span><span class="lab u">Its usual jump</span></div>
-    </div>
-    <p class="cap">Average miss</p></div>
-    <div class="sp">
-      <div class="split" aria-hidden="true"><i style="background:var(--model);width:0" data-w="${k.model/N*100}%"></i>${k.tie ? `<i style="background:var(--tie);width:0" data-w="${k.tie/N*100}%"></i>` : ''}<i style="background:var(--usual);width:0" data-w="${k.usual/N*100}%"></i></div>
-      <div class="splitlab"><span class="m">Our model closer <b>${P(k.model)}%</b></span>${k.tie ? `<span style="color:var(--tie)">Tie <b>${P(k.tie)}%</b></span>` : ''}<span class="u">Its usual jump closer <b>${P(k.usual)}%</b></span></div>
-      ${WK.story ? `<p class="cap" style="margin-top:8px;color:var(--text)">Its usual jump was closer more often, but our model's wins were bigger.</p>` : ''}
-    </div>`;
-}
-function growWeek(){
-  document.querySelectorAll('#week .pair .num').forEach(el => countUp(el, +el.dataset.to, 2, 900, '%'));
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    document.querySelectorAll('#week .split i').forEach(i => i.style.width = i.dataset.w);
-  }));
-}
-
 /* ---------- glance chart ---------- */
 const gw = $('#gwrap');
 let GX = null, hovC = null, tipC = null, lastPT = 'mouse', glanceFirst = true;
@@ -938,7 +913,6 @@ function show(t, focus){
   }
   if (t === 'live'){
     if (liveCur && FL().length) renderLive(liveCur, false);
-    growWeek();
     if (!GX || GX.W !== gw.clientWidth) buildGlance();
   }
 }
@@ -954,13 +928,11 @@ $('#how').innerHTML = `
   <p><b class="m">Our model</b> is a LightGBM model. Along with past moves, it looks at the stock's volatility over the past month compared with the 3 months before (the "Moving lately" pill) and the VIX market fear gauge (the "Market mood" pill). The pills in the game are inputs the model also looks at, not the reason for any one guess.</p>
   <p>The model was locked and run once on a held-out lockbox of ${D.met.n.toLocaleString('en-US')} past reports (2025 to Sep 2026). The likely range of the improvement is ${P(D.met.lo)} to ${P(D.met.hi)} smaller misses, and our model was closer on about ${Math.round(D.met.wr*100)}% of reports.</p>
   <p>The live week's average misses were ${WK.even ? WK.am.toFixed(2) + ' for both' : WK.am.toFixed(2) + ' for our model and ' + WK.au.toFixed(2) + ' for the usual jump'}; the usual jump was closer for ${WK.k.usual} companies and our model for ${WK.k.model}${WK.mm > WK.mu ? ', with bigger margins when our model was closer' : ''}. One week can be luck, so the ${D.met.n.toLocaleString('en-US')}-report test counts more.</p>
-  <p>All misses are in percentage points. Week totals, the "Who was closer" filter and the dot chart compare exact numbers. Each company's "was closest" line compares the rounded numbers shown on screen, so a near-tie can read as a tie there.</p>`;
+  <p>All misses are in percentage points. Totals, the "Who was closer" filter and the dot chart compare exact numbers. Each company's "was closest" line compares the rounded numbers shown on screen, so a near-tie can read as a tie there.</p>`;
 
 /* ---------- init ---------- */
 syncControls();
-renderWeek();
 renderLive(liveCur, true);
-growWeek();
 buildGlance();
 newRound();
 renderTally();
