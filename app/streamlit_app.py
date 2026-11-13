@@ -1,4 +1,4 @@
-"""Beat the Baseline: showcase app.
+"""Beat the Baseline: the app.
 
     streamlit run app/streamlit_app.py      (make app)
 
