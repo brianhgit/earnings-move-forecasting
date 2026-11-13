@@ -44,7 +44,7 @@ h1{font-size:clamp(32px,3.5vw,44px);line-height:1.06;letter-spacing:-.015em;marg
 .mb{display:grid;grid-template-columns:118px 1fr 84px;align-items:center;gap:10px;font-size:16px;margin:2px 0}
 .mb .lab{font-weight:600}
 .mb .bar{height:12px;background:var(--line);border-radius:6px;overflow:hidden}
-.mb .bar i{display:block;height:100%;border-radius:6px;width:var(--w)}
+.mb .bar i{display:block;height:100%;border-radius:6px;transform-origin:left center}
 .mb .v{font-family:var(--hf);font-weight:600;font-size:27px;text-align:right;line-height:1.1}
 .fact{margin:0;font-size:16px;color:var(--muted)}
 .fact b{color:var(--text);font-weight:600}
@@ -139,15 +139,17 @@ main{padding:24px 0 10px}
 .sc-over{grid-column:2;grid-row:1 / -1;position:relative;pointer-events:none;z-index:2}
 .sc-line{position:absolute;top:22px;bottom:26px;width:0;border-left:3px solid var(--text);transform:translateX(-1.5px)}
 .lane{display:contents}
-.lane .who{grid-column:1;padding:10px 0;line-height:1.2}
+.lane .who{grid-column:1;padding:10px 0;line-height:1.2;position:relative;z-index:1}
 .lane .who b{display:block;font-weight:600;font-size:17px}
-.lane .who .val{font-family:var(--hf);font-weight:600;font-size:24px;margin-top:2px;display:block}
+.lane .who .val{font-family:var(--hf);font-weight:600;font-size:24px;margin-top:2px;display:block;width:max-content;transform-origin:left center}
 .lane .who .tag{display:inline-block;margin-top:4px;font-size:15px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:0 8px;line-height:1.4}
-.lane .trk{grid-column:2;position:relative;min-height:64px}
+.lane .trk{grid-column:2;position:relative;min-height:64px;z-index:1}
 .lane .trk::before{content:"";position:absolute;left:0;right:0;top:50%;height:2px;background:var(--line);transform:translateY(-1px)}
 .gap{position:absolute;top:50%;height:14px;transform:translateY(-50%);border-radius:7px;opacity:.55}
 .dot{position:absolute;top:50%;width:18px;height:18px;border-radius:50%;transform:translate(-50%,-50%);border:3px solid var(--paper);box-shadow:0 1px 3px rgba(43,38,32,.35)}
-.lane .off{grid-column:3;padding:10px 0;display:flex;flex-direction:column;justify-content:center;font-size:16px;color:var(--muted);line-height:1.2}
+.lane .off{grid-column:3;padding:10px 0;display:flex;flex-direction:column;justify-content:center;font-size:16px;color:var(--muted);line-height:1.2;position:relative;z-index:1}
+.band{grid-column:1 / -1;margin:3px -12px;border-radius:12px;background:var(--card);opacity:0;z-index:0;pointer-events:none}
+.band.on{opacity:1}
 .lane .off b{font-family:var(--hf);font-weight:600;font-size:24px;color:var(--text)}
 .badge{display:block;width:max-content;margin-top:4px;font-size:15px;font-weight:600;color:var(--text);background:var(--card);padding:1px 9px;border-radius:999px}
 .sc-axis{grid-column:2;position:relative;height:26px;border-top:1px solid var(--line);font-size:15px;color:var(--muted)}
@@ -254,18 +256,15 @@ details .body p{margin:0 0 12px;font-size:18px}
   .plot .bv{font-size:15px;left:-4px;right:-4px}
 }
 
-/* motion */
+/* motion: only transform and opacity animate; JS (WAAPI) handles choreography, see MO */
 @media (prefers-reduced-motion:no-preference){
   .seg .ind{transition:transform .38s cubic-bezier(.3,.7,.2,1)}
   .panel.enter{animation:pin .42s cubic-bezier(.3,.7,.2,1)}
   @keyframes pin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-  .mb .bar i{transition:width 1.1s cubic-bezier(.3,.7,.2,1) .25s}
-  .split i{transition:width 1s cubic-bezier(.3,.7,.2,1)}
-  .dot{transition:left .6s cubic-bezier(.3,.75,.2,1)}
-  .gap{transition:left .6s cubic-bezier(.3,.75,.2,1),width .6s cubic-bezier(.3,.75,.2,1)}
-  .sc-line,.sc-lab{transition:left .6s cubic-bezier(.3,.75,.2,1)}
-  .stage{opacity:0;transform:translateY(8px);transition:opacity .4s ease,transform .45s cubic-bezier(.3,.7,.2,1)}
+  .stage{opacity:0;transform:translateY(var(--rise,8px));transition:opacity var(--sd,.35s) ease,transform var(--sd,.35s) cubic-bezier(.3,.7,.2,1)}
   .stage.in{opacity:1;transform:none}
+  .lane.dim .stage.in{opacity:.42}
+  .band{transition:opacity .35s ease}
   .plot .b{transform-origin:bottom;animation:grow .6s cubic-bezier(.3,.7,.2,1) both}
   @keyframes grow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
   .l8 .lbl{animation:fade .4s ease both}
@@ -275,9 +274,8 @@ details .body p{margin:0 0 12px;font-size:18px}
   @keyframes pop{from{opacity:0}}
   .selm{transition:transform .55s cubic-bezier(.3,.75,.2,1)}
   .chip,.btn3{transition:background-color .2s ease,color .2s ease,border-color .2s ease}
-  .liveenter{animation:fade .3s ease}
 }
-@media (prefers-reduced-motion:reduce){.stage{opacity:1}}
+@media (prefers-reduced-motion:reduce){.stage{opacity:1}.lane.dim .stage{opacity:1}}
 
 /* responsive */
 @media (max-width:980px){
@@ -436,26 +434,60 @@ const day = s => { const [y,m,d] = s.split('-'); return `${MON[+m-1]} ${+d}, ${y
 const wday = s => WD[new Date(s + 'T12:00:00Z').getUTCDay()];
 const shortDay = s => { const [,m,d] = s.split('-'); return `${wday(s)} ${MON[+m-1]} ${+d}`; };
 
-/* ---------- count-up ---------- */
-function countUp(el, to, dec, ms, suffix){
+/* ---------- motion engine ---------- */
+const MO = /*MO*/{"hero":{"steps":[[0,700],[300,850],[550,850],[1250,600]],"rise":8},"liveFirst":1400,"live":{"realMs":550,"realEase":"out4","afterReal":-250,"frame":"fade","stagger":150,"move":420,"settle":60,"toVerdict":130,"sd":300,"rise":6,"countOff":true,"countVal":false,"dim":false,"pop":false,"band":true},"game":{"realMs":1000,"realEase":"out3","afterReal":100,"frame":"drop","frameMs":250,"stagger":750,"move":550,"settle":100,"toVerdict":350,"toButton":350,"sd":380,"rise":6,"countOff":true,"countVal":false,"dim":false,"pop":true,"band":true}}/*MO*/;
+const EASE = {out3:p => 1 - Math.pow(1 - p, 3), out4:p => 1 - Math.pow(1 - p, 4), out5:p => 1 - Math.pow(1 - p, 5)};
+const EZ = 'cubic-bezier(.25,.8,.25,1)';
+const RAF = new WeakMap();
+/* count a number up; cancels any earlier count on the same element; stops quietly if the element leaves the page */
+function countUp(el, to, dec, ms, suffix, ease){
   suffix = suffix || '';
   const fmt = v => dec === 0 ? Math.round(v).toLocaleString('en-US') : v.toFixed(dec);
-  if (RM) { el.textContent = fmt(to) + suffix; return; }
-  const t0 = performance.now();
+  if (RAF.has(el)) { cancelAnimationFrame(RAF.get(el)); RAF.delete(el); }
+  if (RM || !ms) { el.textContent = fmt(to) + suffix; return; }
+  const E = EASE[ease] || EASE.out3, t0 = performance.now();
+  el.textContent = fmt(0) + suffix;
   const step = now => {
-    const p = Math.min(1, (now - t0) / ms), e = 1 - Math.pow(1 - p, 3);
-    el.textContent = fmt(to * e) + suffix;
-    if (p < 1) requestAnimationFrame(step);
+    if (!el.isConnected) { RAF.delete(el); return; }
+    const p = Math.max(0, Math.min(1, (now - t0) / ms));
+    el.textContent = fmt(p < 1 ? to * E(p) : to) + suffix;
+    if (p < 1) RAF.set(el, requestAnimationFrame(step)); else RAF.delete(el);
   };
-  requestAnimationFrame(step);
+  RAF.set(el, requestAnimationFrame(step));
 }
-document.querySelectorAll('[data-count]').forEach(el => countUp(el, +el.dataset.count, +el.dataset.dec, 1300, el.dataset.suf));
-$('.m-fill').style.setProperty('--w','0%'); $('.u-fill').style.setProperty('--w','0%');
-requestAnimationFrame(() => requestAnimationFrame(() => {
-  const mx = 3.6;
-  $('.m-fill').style.setProperty('--w', (D.met.mm / mx * 100) + '%');
-  $('.u-fill').style.setProperty('--w', (D.met.mb / mx * 100) + '%');
-}));
+/* WAAPI helper: final state lives in CSS/inline style, the animation only supplies the "from" */
+function anim(el, kf, o){
+  if (RM || !el || !el.animate) return null;
+  return el.animate(kf, Object.assign({fill:'backwards', easing:EZ}, o));
+}
+const later = (ms, fn) => RM ? fn() : setTimeout(fn, ms);
+
+/* hero: a short sequence so one thing moves at a time */
+(function hero(){
+  const H = MO.hero;
+  const kick = $('.result .kick [data-count]');
+  const rows = [...document.querySelectorAll('.result .mb')];
+  const h2 = $('.result h2'), fact = $('.result .fact');
+  // reserve the final width so the sentence doesn't slide while 3,382 counts
+  kick.style.display = 'inline-block'; kick.style.textAlign = 'right'; kick.style.minWidth = kick.offsetWidth + 'px';
+  $('.m-fill').style.width = (D.met.mm / 3.6 * 100) + '%';
+  $('.u-fill').style.width = (D.met.mb / 3.6 * 100) + '%';
+  const step = (i, fn) => { const [d, ms] = H.steps[i]; fn(d, ms); };
+  step(0, (d, ms) => later(d, () => countUp(kick, 3382, 0, ms)));
+  rows.forEach((r, k) => step(k + 1, (d, ms) => {
+    const v = r.querySelector('.v'), bar = r.querySelector('.bar i');
+    anim(v, [{opacity:0}, {opacity:1}], {duration:220, delay:d});
+    anim(bar, [{transform:'scaleX(0)'}, {transform:'scaleX(1)'}], {duration:ms, delay:d});
+    if (!RM) v.textContent = (0).toFixed(2) + '%';
+    later(d, () => countUp(v, +v.dataset.count, 2, ms, '%'));
+  }));
+  step(3, (d, ms) => {
+    const n = h2.querySelector('[data-count]');
+    anim(h2, [{opacity:0, transform:`translateY(${H.rise}px)`}, {opacity:1, transform:'none'}], {duration:400, delay:d});
+    anim(fact, [{opacity:0}, {opacity:1}], {duration:400, delay:d + 150});
+    later(d, () => countUp(n, 1.7, 1, ms));
+  });
+})();
 
 /* ---------- info toggles (tap or click, no hover) ---------- */
 let infoN = 0;
@@ -506,7 +538,7 @@ function closest(real, rows){
 function verdictText(best){
   const n = best.map(k => NAME[k]);
   if (n.length === 1) return best[0] === 'you' ? 'You were closest.' : `${n[0]} was closest.`;
-  if (n.length === 2) return `A tie: ${n[0]} and ${n[1].charAt(0).toLowerCase() === 'i' ? 'its usual jump' : n[1].toLowerCase()} were equally close.`;
+  if (n.length === 2) return `A tie: ${best[0] === 'you' ? 'you' : n[0]} and ${n[1].charAt(0).toLowerCase() === 'i' ? 'its usual jump' : n[1].toLowerCase()} were equally close.`;
   return 'A three-way tie: everyone was equally close.';
 }
 function scaleHTML(real, rows){
@@ -520,39 +552,65 @@ function scaleHTML(real, rows){
     const p = P(+f1(r.val));
     const lo = Math.min(p, rp), w = Math.abs(p - rp);
     const gr = `grid-row:${i+2}`;
-    return `<div class="lane${best.includes(r.key) ? ' best' : ''}" data-i="${i}">
-      <div class="who stage" style="${gr}"><b style="color:${COL[r.key]}">${NAME[r.key]}</b><span class="val tnum" style="color:${COL[r.key]}">${pct(r.val)}</span>${r.tag ? `<span class="tag">${r.tag}</span>` : ''}</div>
+    const isBest = best.includes(r.key);
+    return `${isBest ? `<span class="band" style="${gr}" aria-hidden="true"></span>` : ''}<div class="lane${isBest ? ' best' : ''}" data-i="${i}">
+      <div class="who stage" style="${gr}"><b style="color:${COL[r.key]}">${NAME[r.key]}</b><span class="val tnum" style="color:${COL[r.key]}" data-v="${f1(r.val)}">${pct(r.val)}</span>${r.tag ? `<span class="tag">${r.tag}</span>` : ''}</div>
       <div class="trk stage" style="${gr}" aria-hidden="true">
-        <span class="gap" style="background:${COL[r.key]};left:${rp}%;width:0" data-l="${lo}" data-w="${w}"></span>
-        <span class="dot" style="background:${COL[r.key]};left:${rp}%" data-p="${p}"></span>
+        <span class="gap" style="background:${COL[r.key]};left:${lo}%;width:${w}%;transform-origin:${p >= rp ? 'left' : 'right'} center"></span>
+        <span class="dot" style="background:${COL[r.key]};left:${p}%" data-p="${p}" data-rp="${rp}"></span>
       </div>
-      <div class="off stage" style="${gr}">off by<b class="tnum">${(offs[i]/10).toFixed(1)}%</b></div>
+      <div class="off stage" style="${gr}">off by<b class="tnum" data-v="${(offs[i]/10).toFixed(1)}">${(offs[i]/10).toFixed(1)}%</b></div>
     </div>`;
   }).join('');
   return `<div class="scale" style="grid-template-rows:24px repeat(${rows.length},auto) 26px" role="img" aria-label="Real jump ${pct(real)}. ${rows.map((r,i)=>`${NAME[r.key]} ${pct(r.val)}, off by ${(offs[i]/10).toFixed(1)}%`).join('. ')}.">
     <div class="sc-top"></div>
-    <div class="sc-over"><span class="sc-lab${labCls}" style="left:${rp}%">real</span><span class="sc-line" style="left:${rp}%"></span></div>
+    <div class="sc-over frame"><span class="sc-lab${labCls}" style="left:${rp}%">real</span><span class="sc-line" style="left:${rp}%"></span></div>
     ${lanes}
-    <div class="sc-axis" style="grid-row:${rows.length+2}">${ticks}</div>
+    <div class="sc-axis frame" style="grid-row:${rows.length+2}">${ticks}</div>
   </div>
   <p class="verdict stage">${verdictText(best)}</p>`;
 }
-async function playScale(root, fast){
-  const lanes = [...root.querySelectorAll('.lane')];
-  const gapMs = fast ? 120 : 380;
-  await wait(30);
-  for (const ln of lanes){
-    ln.querySelectorAll('.stage').forEach(s => s.classList.add('in'));
-    const dot = ln.querySelector('.dot'), g = ln.querySelector('.gap');
-    requestAnimationFrame(() => {
-      dot.style.left = dot.dataset.p + '%';
-      g.style.left = g.dataset.l + '%';
-      g.style.width = g.dataset.w + '%';
-    });
-    await wait(gapMs);
+function showFrame(root, o){
+  const fr = [...root.querySelectorAll('.frame')];
+  if (o.frame === 'drop'){
+    anim(root.querySelector('.sc-line'), [{transform:'translateX(-1.5px) scaleY(0)'}, {transform:'translateX(-1.5px) scaleY(1)'}], {duration:320});
+    root.querySelector('.sc-line').style.transformOrigin = 'top';
+    anim(root.querySelector('.sc-lab'), [{opacity:0}, {opacity:1}], {duration:250});
+    anim(root.querySelector('.sc-axis'), [{opacity:0}, {opacity:1}], {duration:300});
+  } else if (o.frame === 'fade') fr.forEach(f => anim(f, [{opacity:0}, {opacity:1}], {duration:220}));
+}
+function enterLane(ln, o){
+  ln.querySelectorAll('.stage').forEach(s => s.classList.add('in'));
+  const trk = ln.querySelector('.trk'), dot = ln.querySelector('.dot'), g = ln.querySelector('.gap');
+  const W = trk.clientWidth;
+  if (W){
+    const dx = (+dot.dataset.rp - +dot.dataset.p) / 100 * W;
+    anim(dot, [{transform:`translate(calc(-50% + ${dx.toFixed(1)}px),-50%)`}, {transform:'translate(-50%,-50%)'}], {duration:o.move});
+    anim(g, [{transform:'translateY(-50%) scaleX(0)'}, {transform:'translateY(-50%) scaleX(1)'}], {duration:o.move});
   }
-  await wait(fast ? 250 : 650);
+  if (o.countOff){ const b = ln.querySelector('.off b'); countUp(b, +b.dataset.v, 1, o.move, '%', 'out3'); }
+  if (o.countVal){ const v = ln.querySelector('.val'); countUp(v, +v.dataset.v, 1, o.move, '%', 'out3'); }
+}
+/* rows one by one, then a brief nod to the closest row, then the verdict. alive() says whether this run still owns the DOM. */
+async function playScale(root, o, alive){
+  const lanes = [...root.querySelectorAll('.lane')];
+  root.style.setProperty('--rise', o.rise + 'px');
+  root.style.setProperty('--sd', o.sd + 'ms');
+  for (let i = 0; i < lanes.length; i++){
+    if (!alive()) return false;
+    if (o.dim) lanes.slice(0, i).forEach(l => l.classList.add('dim'));
+    enterLane(lanes[i], o);
+    if (i < lanes.length - 1) await wait(o.stagger);
+  }
+  await wait(o.move + o.settle);
+  if (!alive()) return false;
+  lanes.forEach(l => l.classList.remove('dim'));
+  if (o.band) root.querySelectorAll('.band').forEach(b => b.classList.add('on'));
+  if (o.pop) root.querySelectorAll('.lane.best .val').forEach(v => anim(v, [{transform:'scale(1)'}, {transform:'scale(1.14)'}, {transform:'scale(1)'}], {duration:520, easing:'ease-in-out', fill:'none'}));
+  await wait(o.toVerdict);
+  if (!alive()) return false;
   const v = root.querySelector('.verdict'); if (v) v.classList.add('in');
+  return true;
 }
 
 /* ---------- live data + filters ---------- */
@@ -623,13 +681,25 @@ function renderEmpty(){
 function renderLive(c, first){
   const tok = ++liveToken;
   const out = $('#liveout');
-  out.classList.remove('liveenter'); void out.offsetWidth; out.classList.add('liveenter');
+  const o = MO.live, d0 = first ? MO.liveFirst : 0;
   out.innerHTML = `
     <div class="co"><h3>${esc(c.n)}</h3><span class="tk">${esc(c.t)} · reported ${shortDay(c.d)}</span></div>
     <div class="real"><span class="k">The real jump</span><span class="num tnum" id="lnum">${pct(c.y)}</span></div>
     ${scaleHTML(c.y, [{key:'model', val:c.m}, {key:'usual', val:c.u}])}`;
-  countUp($('#lnum'), +f1(c.y), 1, first ? 900 : 600, '%');
-  (async () => { await wait(first ? 350 : 120); if (tok === liveToken) playScale(out, !first); })();
+  out.style.setProperty('--rise', o.rise + 'px'); out.style.setProperty('--sd', o.sd + 'ms');
+  const lnum = $('#lnum');
+  const alive = () => tok === liveToken && out.contains(lnum);
+  anim(out.querySelector('.co'), [{opacity:0}, {opacity:1}], {duration:200, delay:d0});
+  anim(out.querySelector('.real'), [{opacity:0}, {opacity:1}], {duration:200, delay:d0});
+  if (!RM) lnum.textContent = '0.0%';
+  (async () => {
+    await wait(d0); if (!alive()) return;
+    countUp(lnum, +f1(c.y), 1, o.realMs, '%', o.realEase);
+    showFrame(out, o);
+    out.querySelectorAll('.frame').forEach(f => f.classList.add('in'));
+    await wait(o.afterReal); if (!alive()) return;
+    playScale(out, o, alive);
+  })();
 }
 
 /* ---------- week box ---------- */
@@ -683,7 +753,7 @@ function buildGlance(){
   </svg><div class="gtip" hidden></div>`;
   GX = {X, W, H, y0, top, pos:new Map(), circles:[...gw.querySelectorAll('.gd')]};
   if (glanceFirst && !RM){
-    GX.circles.forEach((el, i) => { el.classList.add('pop'); el.style.animationDelay = (Math.min(Math.abs(L[i].dd), 4) * 110 + (i % 7) * 20) + 'ms'; });
+    GX.circles.forEach((el, i) => { el.classList.add('pop'); el.style.animationDelay = (MO.liveFirst + Math.min(Math.abs(L[i].dd), 4) * 110 + (i % 7) * 20) + 'ms'; });
     glanceFirst = false;
   }
   updateGlance();
@@ -870,17 +940,29 @@ async function reveal(){
   const rows = [{key:'you', val:g}, {key:'model', val:R.m}, {key:'usual', val:R.u}];
   const {offs} = closest(R.y, rows);
   played++; if (offs[0] < offs[1]) beat++;
-  renderTally();
   const box = $('#reveal');
   box.innerHTML = `<div class="real" style="margin-top:4px"><span class="k">The real jump</span><span class="num tnum" id="rnum">0.0%</span></div>
     ${scaleHTML(R.y, rows)}
-    <div class="again"><button class="btn2" id="again" type="button">Try another report</button></div>`;
+    <div class="again stage"><button class="btn2" id="again" type="button">Try another report</button></div>`;
   $('#again').addEventListener('click', () => { newRound(); $('.gcard').scrollIntoView({behavior: RM ? 'auto' : 'smooth', block:'nearest'}); setTimeout(() => { const i = $('#g'); if (i) i.focus({preventScroll:true}); }, RM ? 0 : 300); });
   box.scrollIntoView({behavior: RM ? 'auto' : 'smooth', block: 'nearest'});
-  countUp($('#rnum'), +f1(R.y), 1, 500, '%');
-  await wait(100);
-  if (my !== round) return;
-  await playScale(box, true);
+  // Pace it so each step lands: the real jump first, then each guess, then the verdict.
+  const o = MO.game, alive = () => my === round && box.isConnected;
+  box.style.setProperty('--rise', o.rise + 'px'); box.style.setProperty('--sd', o.sd + 'ms');
+  box.querySelectorAll('.frame').forEach(f => { if (!RM) f.style.opacity = 0; });
+  countUp($('#rnum'), +f1(R.y), 1, o.realMs, '%', o.realEase);
+  await wait(o.realMs + o.afterReal);
+  if (!alive()){ renderTally(); return; }
+  box.querySelectorAll('.frame').forEach(f => f.style.opacity = '');
+  showFrame(box, o);
+  await wait(o.frameMs);
+  if (!alive()){ renderTally(); return; }
+  const ok = await playScale(box, o, alive);
+  renderTally();
+  if (!ok) return;
+  await wait(o.toButton);
+  if (!alive()) return;
+  const ag = box.querySelector('.again'); if (ag) ag.classList.add('in');
 }
 function renderTally(){
   if (!played){
