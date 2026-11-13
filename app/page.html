@@ -121,6 +121,8 @@ main{padding:24px 0 10px}
 .p-y{background:#fbefc4;color:#6e5100}
 .p-r{background:#fbe1de;color:#a3241a}
 .p-n{background:#ECE5D8;color:#4A4237}
+.pill.arw::before{display:none}
+.pill.arw svg{width:12px;height:12px;flex:none}
 .info{position:relative;width:44px;height:44px;margin:-11px -12px -11px -8px;border:0;background:none;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex:none}
 .info span{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--muted);color:var(--muted);font-family:var(--hf);font-weight:600;font-size:15px;line-height:19px;text-align:center;font-style:italic}
 .info[aria-expanded=true] span{background:var(--text);border-color:var(--text);color:var(--bg)}
@@ -157,6 +159,8 @@ main{padding:24px 0 10px}
 .sc-axis span.l{transform:none}
 .sc-axis span.r{transform:translateX(-100%)}
 .verdict{margin:14px 0 0;font-family:var(--hf);font-weight:600;font-size:26px;line-height:1.25}
+.verdict u{text-decoration:none;color:var(--c);padding-bottom:1px;background:linear-gradient(var(--c),var(--c)) 0 100%/100% 2px no-repeat;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+@media (forced-colors:active){.verdict u{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:4px}}
 
 .empty{text-align:center;padding:30px 10px}
 .empty h3{font-size:28px;margin:0 0 6px}
@@ -249,6 +253,8 @@ details .body p{margin:0 0 12px;font-size:18px}
 .plot .b{position:absolute;left:14%;right:14%;bottom:0;background:#C8B79C;border-radius:4px 4px 0 0}
 .plot .bv{position:absolute;left:-6px;right:-6px;text-align:center;font-size:16px;font-weight:600;line-height:20px;height:20px;z-index:4}
 .plot .bv em{font-style:normal}
+.plot .bt{position:absolute;font-size:15px;line-height:18px;height:18px;color:var(--muted);white-space:nowrap;z-index:4;left:50%;transform:translateX(-50%)}
+.plot .bt.al{left:0;transform:none}.plot .bt.ar{left:auto;right:0;transform:none}
 .uline{position:absolute;left:0;right:0;border-top:2.5px dashed var(--usual);z-index:2}
 .ends{display:flex;justify-content:space-between;font-size:15px;color:var(--muted);margin-top:2px}
 @media (max-width:600px){
@@ -258,9 +264,11 @@ details .body p{margin:0 0 12px;font-size:18px}
 
 /* motion: only transform and opacity animate; JS (WAAPI) handles choreography, see MO */
 @media (prefers-reduced-motion:no-preference){
-  .seg .ind{transition:transform .38s cubic-bezier(.3,.7,.2,1)}
-  .panel.enter{animation:pin .42s cubic-bezier(.3,.7,.2,1)}
-  @keyframes pin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .seg .ind{transition:transform .25s cubic-bezier(.3,.7,.2,1)}
+  .panel.enter{animation:pin .22s cubic-bezier(.3,.7,.2,1)}
+  @keyframes pin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .verdict u{background-size:0 2px;transition:background-size .42s cubic-bezier(.3,.7,.2,1)}
+  .verdict.in u{background-size:100% 2px}
   .stage{opacity:0;transform:translateY(var(--rise,8px));transition:opacity var(--sd,.35s) ease,transform var(--sd,.35s) cubic-bezier(.3,.7,.2,1)}
   .stage.in{opacity:1;transform:none}
   .lane.dim .stage.in{opacity:.42}
@@ -269,10 +277,10 @@ details .body p{margin:0 0 12px;font-size:18px}
   @keyframes grow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
   .l8 .lbl{animation:fade .4s ease both}
   @keyframes fade{from{opacity:0}to{opacity:1}}
-  .gd{transition:r .35s cubic-bezier(.3,.7,.2,1),opacity .35s ease,fill .35s ease,cx .5s cubic-bezier(.3,.7,.2,1),cy .5s cubic-bezier(.3,.7,.2,1)}
-  .gd.pop{animation:pop .5s cubic-bezier(.3,.7,.2,1) both}
-  @keyframes pop{from{opacity:0}}
-  .selm{transition:transform .55s cubic-bezier(.3,.75,.2,1)}
+  .gd{transform-box:fill-box;transform-origin:center;transition:r .3s cubic-bezier(.3,.7,.2,1),opacity .3s ease,fill .3s ease,cx .45s cubic-bezier(.3,.7,.2,1),cy .45s cubic-bezier(.3,.7,.2,1)}
+  .gd.pop{animation:pop .4s cubic-bezier(.3,.7,.2,1) both}
+  @keyframes pop{from{opacity:0;transform:scale(.3)}}
+  .selm{transition:transform .45s cubic-bezier(.3,.75,.2,1)}
   .chip,.btn3{transition:background-color .2s ease,color .2s ease,border-color .2s ease}
 }
 @media (prefers-reduced-motion:reduce){.stage{opacity:1}.lane.dim .stage{opacity:1}}
@@ -435,7 +443,7 @@ const wday = s => WD[new Date(s + 'T12:00:00Z').getUTCDay()];
 const shortDay = s => { const [,m,d] = s.split('-'); return `${wday(s)} ${MON[+m-1]} ${+d}`; };
 
 /* ---------- motion engine ---------- */
-const MO = /*MO*/{"hero":{"steps":[[0,700],[300,850],[550,850],[1250,600]],"rise":8},"liveFirst":1400,"live":{"realMs":550,"realEase":"out4","afterReal":-250,"frame":"fade","stagger":150,"move":420,"settle":60,"toVerdict":130,"sd":300,"rise":6,"countOff":true,"countVal":false,"dim":false,"pop":false,"band":true},"game":{"realMs":1000,"realEase":"out3","afterReal":100,"frame":"drop","frameMs":250,"stagger":750,"move":550,"settle":100,"toVerdict":350,"toButton":350,"sd":380,"rise":6,"countOff":true,"countVal":false,"dim":false,"pop":true,"band":true}}/*MO*/;
+const MO = /*MO*/{"hero":{"steps":[[0,700],[300,850],[550,850],[1250,600]],"rise":8},"liveFirst":1400,"glanceDelay":3600,"live":{"realMs":700,"realEase":"out3","afterReal":50,"frame":"drop","frameMs":200,"stagger":500,"move":480,"settle":80,"toVerdict":280,"sd":340,"rise":6,"countOff":true,"countVal":false,"dim":false,"pop":true,"band":true},"game":{"realMs":1000,"realEase":"out3","afterReal":100,"frame":"drop","frameMs":250,"stagger":750,"move":550,"settle":100,"toVerdict":350,"toButton":350,"sd":380,"rise":6,"countOff":true,"countVal":false,"dim":false,"pop":true,"band":true}}/*MO*/;
 const EASE = {out3:p => 1 - Math.pow(1 - p, 3), out4:p => 1 - Math.pow(1 - p, 4), out5:p => 1 - Math.pow(1 - p, 5)};
 const EZ = 'cubic-bezier(.25,.8,.25,1)';
 const RAF = new WeakMap();
@@ -501,6 +509,7 @@ document.addEventListener('click', e => {
   const box = document.getElementById(b.getAttribute('aria-controls')); if (!box) return;
   const open = b.getAttribute('aria-expanded') !== 'true';
   b.setAttribute('aria-expanded', open); box.hidden = !open;
+  if (open) anim(box, [{opacity:0, transform:'translateY(-4px)'}, {opacity:1, transform:'none'}], {duration:180});
 });
 
 /* ---------- pills ---------- */
@@ -509,10 +518,19 @@ function moodPill(vix){
   const [c, w] = vix < 20 ? ['p-g','Calm'] : vix <= 30 ? ['p-y','A little nervous'] : ['p-r','Nervous'];
   return `<div class="pillset"><span class="k">Market mood</span><span class="pill ${c}">${w}</span></div>`;
 }
-function pillsHTML(vix, r, noMood){
+const MONTH_INFO = 'How much the stock price rose or fell over the month before the report.';
+function monthPill(x){
+  const a = Math.abs(x), up = x > 0;
+  const w = a < 0.5 ? 'Flat' : `${up ? 'Up' : 'Down'} ${f1(a)}%`;
+  const arrow = a < 0.5 ? '' : `<svg viewBox="0 0 12 12" aria-hidden="true"><path d="${up ? 'M6 10V2M2.5 5.5L6 2l3.5 3.5' : 'M6 2v8M2.5 6.5L6 10l3.5-3.5'}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  const ib = infoBtn('What does Past month mean?', MONTH_INFO);
+  return {html:`<div class="pillset"><span class="k">Past month ${ib.btn}</span><span class="pill p-n${arrow ? ' arw' : ''}">${arrow}${esc(w)}</span></div>`, box:ib.box};
+}
+function pillsHTML(vix, r, noMood, month){
   const [c, w] = r < .85 ? ['p-g','Less than usual'] : r <= 1.15 ? ['p-n','About usual'] : ['p-r','More than usual'];
   const ib = infoBtn('What does Moving lately mean?', MOVE_INFO);
-  return `<div class="pills">${noMood ? '' : moodPill(vix)}<div class="pillset"><span class="k">Moving lately ${ib.btn}</span><span class="pill ${c}">${w}</span></div>${ib.box}</div>`;
+  const mp = month == null ? null : monthPill(month);
+  return `<div class="pills">${noMood ? '' : moodPill(vix)}<div class="pillset"><span class="k">Moving lately ${ib.btn}</span><span class="pill ${c}">${w}</span></div>${mp ? mp.html : ''}${ib.box}${mp ? mp.box : ''}</div>`;
 }
 
 /* ---------- scale chart ---------- */
@@ -535,11 +553,14 @@ function closest(real, rows){
   const lo = Math.min(...offs);
   return {offs, best: rows.filter((r, i) => offs[i] === lo).map(r => r.key)};
 }
+const VCOL = {you:'var(--you)', model:'var(--model)', usual:'var(--usual)'};
 function verdictText(best){
-  const n = best.map(k => NAME[k]);
-  if (n.length === 1) return best[0] === 'you' ? 'You were closest.' : `${n[0]} was closest.`;
-  if (n.length === 2) return `A tie: ${best[0] === 'you' ? 'you' : n[0]} and ${n[1].charAt(0).toLowerCase() === 'i' ? 'its usual jump' : n[1].toLowerCase()} were equally close.`;
-  return 'A three-way tie: everyone was equally close.';
+  // each winner's name underlined in its own color; ties underline every tied name, drawn left to right
+  const u = (k, i, lower) => { const t = lower ? NAME[k].toLowerCase() : NAME[k];
+    return `<u style="--c:${VCOL[k]};transition-delay:${(0.12 + i * 0.22).toFixed(2)}s">${esc(t)}</u>`; };
+  if (best.length === 1) return best[0] === 'you' ? `${u('you', 0)} were closest.` : `${u(best[0], 0)} was closest.`;
+  if (best.length === 2) return `A tie: ${u(best[0], 0, true)} and ${u(best[1], 1, true)} were equally close.`;
+  return `A three-way tie: ${u(best[0], 0, true)}, ${u(best[1], 1, true)} and ${u(best[2], 2, true)} were equally close.`;
 }
 function scaleHTML(real, rows){
   const {min, max, tv} = zoomRange([real, ...rows.map(r => r.val)].map(v => +f1(v)));
@@ -658,7 +679,22 @@ $('#fsec').addEventListener('change', e => { F.sec = e.target.value; applyFilter
 $('#fday').addEventListener('change', e => { F.day = e.target.value; applyFilters(); });
 $('#fwho').addEventListener('change', e => { F.who = e.target.value; applyFilters(); });
 $('#fclear').addEventListener('click', clearFilters);
-$('#ftog').addEventListener('click', e => { const o = $('#fr1').hidden; $('#fr1').hidden = !o; e.currentTarget.setAttribute('aria-expanded', o); });
+let fAnim = null;
+$('#ftog').addEventListener('click', e => {
+  const fr = $('#fr1'), open = e.currentTarget.getAttribute('aria-expanded') !== 'true';
+  e.currentTarget.setAttribute('aria-expanded', open);
+  const from = fAnim ? fr.getBoundingClientRect().height : null;
+  if (fAnim){ fAnim.onfinish = null; fAnim.cancel(); fAnim = null; }
+  fr.style.overflow = '';
+  if (RM){ fr.hidden = !open; return; }
+  fr.hidden = false;
+  const cs = getComputedStyle(fr), H = fr.getBoundingClientRect().height, pt = cs.paddingTop, mt = cs.marginTop;
+  const shut = {height:'0px', paddingTop:'0px', marginTop:'0px', opacity:0}, full = {height:H + 'px', paddingTop:pt, marginTop:mt, opacity:1};
+  const a = open ? Object.assign({}, shut, from != null ? {height:from + 'px', opacity:from / H} : {}) : Object.assign({}, full, from != null ? {height:from + 'px'} : {});
+  fr.style.overflow = 'hidden';
+  fAnim = fr.animate([a, open ? full : shut], {duration: open ? 220 : 180, easing:EZ, fill:'forwards'});
+  fAnim.onfinish = () => { fr.style.overflow = ''; if (!open) fr.hidden = true; fAnim.cancel(); fAnim = null; };
+});
 $('#surprise').addEventListener('click', () => {
   const list = FL(); if (!list.length) return;
   const pool = list.length > 1 ? list.filter(c => c !== liveCur) : list;
@@ -691,13 +727,15 @@ function renderLive(c, first){
   const alive = () => tok === liveToken && out.contains(lnum);
   anim(out.querySelector('.co'), [{opacity:0}, {opacity:1}], {duration:200, delay:d0});
   anim(out.querySelector('.real'), [{opacity:0}, {opacity:1}], {duration:200, delay:d0});
-  if (!RM) lnum.textContent = '0.0%';
+  const frames = [...out.querySelectorAll('.frame')];
+  if (!RM){ lnum.textContent = '0.0%'; frames.forEach(f => f.style.opacity = 0); }
   (async () => {
     await wait(d0); if (!alive()) return;
     countUp(lnum, +f1(c.y), 1, o.realMs, '%', o.realEase);
+    await wait(o.realMs + o.afterReal); if (!alive()) return;
+    frames.forEach(f => f.style.opacity = '');
     showFrame(out, o);
-    out.querySelectorAll('.frame').forEach(f => f.classList.add('in'));
-    await wait(o.afterReal); if (!alive()) return;
+    await wait(o.frameMs); if (!alive()) return;
     playScale(out, o, alive);
   })();
 }
@@ -753,7 +791,8 @@ function buildGlance(){
   </svg><div class="gtip" hidden></div>`;
   GX = {X, W, H, y0, top, pos:new Map(), circles:[...gw.querySelectorAll('.gd')]};
   if (glanceFirst && !RM){
-    GX.circles.forEach((el, i) => { el.classList.add('pop'); el.style.animationDelay = (MO.liveFirst + Math.min(Math.abs(L[i].dd), 4) * 110 + (i % 7) * 20) + 'ms'; });
+    GX.circles.forEach((el, i) => { el.classList.add('pop'); el.style.animationDelay = (MO.glanceDelay + Math.min(Math.abs(L[i].dd), 4) * 110 + (i % 7) * 18) + 'ms'; });
+    anim(gw.querySelector('.selm'), [{opacity:0}, {opacity:1}], {duration:250, delay:MO.glanceDelay + 650});
     glanceFirst = false;
   }
   updateGlance();
@@ -803,6 +842,7 @@ function showTip(c, touch){
   const tip = gw.querySelector('.gtip');
   tipC = c;
   const narrow = innerWidth <= 980;
+  const wasHidden = tip.hidden;
   tip.className = 'gtip' + (touch && narrow ? ' touch' : '');
   tip.innerHTML = `<b>${esc(c.n)}</b> ${esc(c.t)}<br><span class="tm">Our model off by ${c.om.toFixed(1)}%</span><br><span class="tu">Its usual jump off by ${c.ou.toFixed(1)}%</span>${touch && narrow ? `<button type="button">See details</button>` : ''}`;
   tip.hidden = false;
@@ -816,6 +856,7 @@ function showTip(c, touch){
   let top = cands.find(t => t >= -4 && t + th <= GX.H + 4 && !hits(t));
   if (top === undefined) top = Math.max(0, y - th - 14);
   tip.style.left = left + 'px'; tip.style.top = top + 'px';
+  if (wasHidden) anim(tip, [{opacity:0, transform:'translateY(4px)'}, {opacity:1, transform:'none'}], {duration:150});
   GX.circles.forEach(el => el.classList.toggle('hov', L[+el.dataset.i] === c));
   const b = tip.querySelector('button');
   if (b) b.addEventListener('click', ev => { ev.stopPropagation(); hideTip(); $('#liveout').scrollIntoView({behavior: RM ? 'auto' : 'smooth', block: 'start'}); });
@@ -840,7 +881,7 @@ gw.addEventListener('click', e => {
   if (c !== liveCur) choose(c);            // choose() moves the ring; keep the popup beside it
   showTip(c, lastPT !== 'mouse');
 });
-let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (gw.clientWidth && (!GX || GX.W !== gw.clientWidth)) buildGlance(); }, 120); });
+let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (gw.clientWidth && (!GX || GX.W !== gw.clientWidth)) buildGlance(); placeTags(); }, 120); });
 
 /* combobox */
 const q = $('#q'), lb = $('#lb');
@@ -858,6 +899,7 @@ function openList(filter){
   lb.innerHTML = opts.length
     ? opts.map((c, i) => `<li role="option" id="o${i}" data-i="${i}" aria-selected="${i===act}">${esc(c.n)}<span>${esc(c.t)}</span></li>`).join('')
     : `<li class="none" role="option" aria-disabled="true">${base.length ? 'No company matches. Try a ticker like PLTR.' : 'No companies match these filters.'}</li>`;
+  if (lb.hidden) anim(lb, [{opacity:0, transform:'translateY(-4px)'}, {opacity:1, transform:'none'}], {duration:150});
   lb.hidden = false; q.setAttribute('aria-expanded','true');
   if (act >= 0) q.setAttribute('aria-activedescendant','o0'); else q.removeAttribute('aria-activedescendant');
 }
@@ -891,16 +933,39 @@ gsec.innerHTML = `<option value="">Any sector</option>` + PSEC.map(s => `<option
 gsec.addEventListener('change', () => newRound());
 let G = null;            // current report, kept only in JS memory
 let played = 0, beat = 0, round = 0;
+/* lift the bar tags clear of value labels, the dashed line and each other, then reserve headroom above the plot */
+function placeTags(){
+  const plot = $('#game .plot'); if (!plot || !plot.offsetWidth) return;
+  const tags = [...plot.querySelectorAll('.bt')].sort((a, b) => b.textContent.includes('biggest') - a.textContent.includes('biggest'));
+  const fixed = [...plot.querySelectorAll('.bv')].map(e => e.getBoundingClientRect());
+  const ul = plot.querySelector('.uline').getBoundingClientRect();
+  const placed = [];
+  plot.style.marginTop = '';
+  tags.forEach(t => {
+    t.style.bottom = t.dataset.b + 'px';
+    for (let k = 0; k < 10; k++){
+      const r = t.getBoundingClientRect();
+      const hit = fixed.concat(placed, [{left:-1e4, right:1e4, top:ul.top - 1, bottom:ul.bottom + 1}])
+        .find(o => r.left < o.right - 1 && r.right > o.left + 1 && r.top < o.bottom - 1 && r.bottom > o.top + 1);
+      if (!hit) break;
+      t.style.bottom = (t.parentElement.getBoundingClientRect().bottom - hit.top + 2).toFixed(1) + 'px';
+    }
+    placed.push(t.getBoundingClientRect());
+  });
+  const pt = plot.getBoundingClientRect().top;
+  const minTop = Math.min(pt, ...placed.map(r => r.top), ...fixed.map(r => r.top));
+  plot.style.marginTop = Math.max(28, pt - minTop + 6).toFixed(0) + 'px';
+}
 function newRound(){
   round++;
   const pool = gsec.value ? D.past.filter(p => p[8] === gsec.value) : D.past;
   const P = pool[Math.floor(Math.random() * pool.length)];
-  G = {t:P[0], d:P[1], y:P[2], m:P[3], u:P[4], l8:P[5], r:P[6], vix:P[7], s:P[8]};
+  G = {t:P[0], d:P[1], y:P[2], m:P[3], u:P[4], l8:P[5], r:P[6], vix:P[7], s:P[8], r21:P[9]};
   const nm = (D.names[G.t] || G.t).replace(/\s*&$/, '');
   $('#game').innerHTML = `
     <div class="ask">
       <div class="co"><h3>${esc(nm)}</h3><span class="tk">${esc(G.t)} · ${day(G.d)}</span></div>
-      ${pillsHTML(G.vix, G.r)}
+      ${pillsHTML(G.vix, G.r, false, G.r21)}
       <div class="l8"><div class="l8head"><span>Its last 8 jumps, oldest to newest (%)</span><span class="ulg">Its usual jump ${pct(G.u)}</span></div>${l8SVG(G.l8, G.u)}</div>
       <form class="guessrow" id="gf" novalidate>
         <label for="g">How big was the jump? Your guess</label><div class="inbox"><input id="g" type="text" inputmode="decimal" autocomplete="off" placeholder="0.0"></div>
@@ -910,17 +975,21 @@ function newRound(){
     </div>
     <div id="reveal"></div>`;
   $('#gf').addEventListener('submit', e => { e.preventDefault(); reveal(); });
+  placeTags();
 }
 function l8SVG(arr, u){
   const PH = 120, LBL = 20;                       // plot height and label height, px
   const mx = Math.max(...arr, u) * 1.04 || 1;
   const px = v => v / mx * PH;
+  const big = arr.lastIndexOf(Math.max(...arr));     // ties go to the newest
   const bars = arr.map((v, i) => {
     // label sits just above its bar; if the dashed line would run through it, lift it above the line
     let b = px(v) + 3;
     const lineY = px(u);
     if (lineY >= b - 3 && lineY <= b + LBL + 2) b = lineY + 5;
-    return `<div class="c"><span class="bv tnum lbl" style="bottom:${b.toFixed(1)}px;animation-delay:${200+i*40}ms"><em>${f1(v)}</em></span><span class="b" style="height:${(v / mx * 100).toFixed(2)}%;animation-delay:${i*40}ms"></span></div>`;
+    const tg = [i === arr.length - 1 ? 'last time' : '', i === big ? 'biggest' : ''].filter(Boolean).join(', ');
+    const al = i === 0 ? ' al' : i === arr.length - 1 ? ' ar' : '';
+    return `<div class="c"><span class="bv tnum lbl" style="bottom:${b.toFixed(1)}px;animation-delay:${200+i*40}ms"><em>${f1(v)}</em></span>${tg ? `<span class="bt lbl${al}" data-b="${(b + LBL + 1).toFixed(1)}" style="bottom:${(b + LBL + 1).toFixed(1)}px;animation-delay:520ms">${tg}</span>` : ''}<span class="b" style="height:${(v / mx * 100).toFixed(2)}%;animation-delay:${i*40}ms"></span></div>`;
   }).join('');
   return `<div class="l8c" role="img" aria-label="Its last 8 jumps, oldest to newest: ${arr.map(f1).join(', ')} percent. Its usual jump is ${pct(u)}.">
     <div class="plot">${bars}<span class="uline" style="bottom:${(u / mx * 100).toFixed(2)}%"></span></div>
@@ -990,11 +1059,11 @@ function show(t, focus){
     if (on){ p.classList.remove('enter'); void p.offsetWidth; p.classList.add('enter'); }
   });
   if (t === 'past'){
+    placeTags();
     const sw = $('.switch');
     if (sw.getBoundingClientRect().top > 4) scrollTo({top: sw.getBoundingClientRect().top + scrollY, behavior: RM ? 'auto' : 'smooth'});
   }
   if (t === 'live'){
-    if (liveCur && FL().length) renderLive(liveCur, false);
     if (!GX || GX.W !== gw.clientWidth) buildGlance();
   }
 }
@@ -1007,7 +1076,7 @@ seg.addEventListener('keydown', e => {
 const P = x => (x * 100).toFixed(1) + '%';
 $('#how').innerHTML = `
   <p><b class="u">Its usual jump</b> is the baseline: the median absolute size of the company's last 8 earnings moves.</p>
-  <p><b class="m">Our model</b> is a LightGBM model. Along with past moves, it looks at the stock's volatility over the past month compared with the 3 months before (the "Moving lately" pill) and the VIX market fear gauge (the "Market mood" pill). The pills in the game are inputs the model also looks at, not the reason for any one guess.</p>
+  <p><b class="m">Our model</b> is a LightGBM model. It looks at the company's last 8 jumps (the middle, the average, the biggest and the most recent), how much the stock moved day to day over the past month compared with the 3 months before (the "Moving lately" tab), how much the price rose or fell over the past month (the "Past month" tab), and the market's fear gauge, the VIX (the "Market mood" tab). The tabs in the game are inputs the model also looks at, not the reason for any one guess.</p>
   <p>The model was locked and run once on a held-out lockbox of ${D.met.n.toLocaleString('en-US')} past reports (2025 to Sep 2026). The likely range of the improvement is ${P(D.met.lo)} to ${P(D.met.hi)} smaller misses, and our model was closer on about ${Math.round(D.met.wr*100)}% of reports.</p>
   <p>The live week's average misses were ${WK.even ? WK.am.toFixed(2) + ' for both' : WK.am.toFixed(2) + ' for our model and ' + WK.au.toFixed(2) + ' for the usual jump'}; the usual jump was closer for ${WK.k.usual} companies and our model for ${WK.k.model}${WK.mm > WK.mu ? ', with bigger margins when our model was closer' : ''}. One week can be luck, so the ${D.met.n.toLocaleString('en-US')}-report test counts more.</p>
   <p>All misses are in percentage points. Totals, the "Who was closer" filter and the dot chart compare exact numbers. Each company's "was closest" line compares the rounded numbers shown on screen, so a near-tie can read as a tie there.</p>`;

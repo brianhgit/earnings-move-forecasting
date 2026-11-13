@@ -9,7 +9,7 @@ gathers the numbers, drops them into the page and shows it full screen.
 Data it reads:
   live/drops/<newest scored drop>/forecasts.csv + scores.csv   "Our live test"
   results/runs/<lockbox run>/predictions.parquet               "Try a past report"
-  app/past_clues.csv                                           last 8 moves and jumpiness for each past report
+  app/past_clues.csv                                           last 8 moves, jumpiness and past-month return for each past report
   results/runs/<lockbox run>/metrics.json                      the locked-test result
   app/companies.csv                                            ticker,name (from the universe file)
 """
@@ -90,7 +90,7 @@ def build_data() -> tuple[dict, bool]:
             live.append({"t": r.ticker, "n": names.get(r.ticker, r.ticker), "u": round(r.pred_baseline, 3),
                          "m": round(r.pred_model, 3), "v21": round(r.vol_21d, 3), "v63": round(r.vol_63d, 3),
                          "vix": round(r.vix, 2), "y": round(r.y_true, 3), "s": str(r.sector),
-                         "d": str(r.report_date)[:10]})
+                         "d": str(r.report_date)[:10], "r21": round(r.ret_21d, 3)})
         live.sort(key=lambda c: c["n"].lower())
 
     # Past reports: the locked test set, with the clues each report had beforehand.
@@ -109,7 +109,7 @@ def build_data() -> tuple[dict, bool]:
                 ratio = round(r.vol_21d / r.vol_63d, 3) if r.vol_63d else 1.0
                 past.append([r.ticker, str(pd.Timestamp(r.report_date).date()), round(r.y_true, 2),
                              round(r.pred_model, 2), round(r.pred_baseline, 2), last8, ratio, round(r.vix, 1),
-                             str(r.sector)])
+                             str(r.sector), round(r.ret_21d, 3)])
     return {"live": live, "past": past, "names": names, "met": met}, real
 
 
