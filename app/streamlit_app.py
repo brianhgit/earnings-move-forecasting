@@ -84,11 +84,13 @@ def build_data() -> tuple[dict, bool]:
             found.append((frozen, d.name, d))
     if found:
         d = max(found)[2]
-        fc = pd.read_csv(d / "forecasts.csv").merge(pd.read_csv(d / "scores.csv")[["ticker", "y_true"]], on="ticker")
+        sc = pd.read_csv(d / "scores.csv")[["ticker", "sector", "report_date", "y_true"]]
+        fc = pd.read_csv(d / "forecasts.csv").merge(sc, on="ticker")
         for r in fc.itertuples():
             live.append({"t": r.ticker, "n": names.get(r.ticker, r.ticker), "u": round(r.pred_baseline, 3),
                          "m": round(r.pred_model, 3), "v21": round(r.vol_21d, 3), "v63": round(r.vol_63d, 3),
-                         "vix": round(r.vix, 2), "y": round(r.y_true, 3)})
+                         "vix": round(r.vix, 2), "y": round(r.y_true, 3), "s": str(r.sector),
+                         "d": str(r.report_date)[:10]})
         live.sort(key=lambda c: c["n"].lower())
 
     # Past reports: the locked test set, with the clues each report had beforehand.
@@ -106,7 +108,8 @@ def build_data() -> tuple[dict, bool]:
                 last8 = [round(float(x), 1) for x in str(r.last8).split()]
                 ratio = round(r.vol_21d / r.vol_63d, 3) if r.vol_63d else 1.0
                 past.append([r.ticker, str(pd.Timestamp(r.report_date).date()), round(r.y_true, 2),
-                             round(r.pred_model, 2), round(r.pred_baseline, 2), last8, ratio, round(r.vix, 1)])
+                             round(r.pred_model, 2), round(r.pred_baseline, 2), last8, ratio, round(r.vix, 1),
+                             str(r.sector)])
     return {"live": live, "past": past, "names": names, "met": met}, real
 
 
