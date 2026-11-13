@@ -112,13 +112,14 @@ Every backtest, locked-test opening and live scoring writes a run to `results/` 
 
 ## Status
 
-The final locked test showed a 1.7% relative improvement in MAE over the baseline, below the preregistered 3% success threshold. The model performed better than the baseline, but the result does not meet the official pass criterion.
+The final locked test showed a 1.7% relative improvement in MAE over the baseline, below the preregistered 3% success threshold. The model performed better than the baseline, but the result does not meet the official pass criterion. The shrinkage control, which only pulls the baseline toward the overall median, did slightly better (2.3%), so most of the gain comes from not overreacting to a company's last 8 moves. The live drop was even: both averaged a 3.79 miss over 138 reports, with an interval that resamples the 5 report days and is descriptive only.
 
 | | Baseline MAE | Model MAE | Improvement (95% interval) |
 |---|---|---|---|
 | Practice years (dev), 2022 to 2024 | 3.03 | 2.97 | 1.9% (0.9% to 2.9%) |
 | Locked test, Jan 2025 to Sep 2026 | 3.50 | 3.44 | 1.7% (0.6% to 2.9%) |
-| Live drop, Nov 2 to 6, 2026 | | | descriptive |
+| Shrinkage control on the locked test | 3.50 | 3.42 | 2.3% (0.9% to 3.9%) |
+| Live drop, Nov 2 to 6, 2026 (138 reports) | 3.79 | 3.79 | 0.0% (-4.6% to 5.7%), descriptive |
 
 ## Limitations
 
