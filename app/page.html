@@ -31,31 +31,26 @@ button,input,select{font:inherit;color:inherit}
 /* ---------- hero (compact band) ---------- */
 .hero{padding:24px 0 22px}
 .hero-grid{display:grid;grid-template-columns:minmax(0,1.12fr) minmax(0,.88fr);gap:40px;align-items:center}
-.byline{font-size:16px;color:var(--muted);margin:0 0 6px}
 h1{font-size:clamp(32px,3.5vw,44px);line-height:1.06;letter-spacing:-.015em;margin:0 0 14px;max-width:20ch}
-.steps{list-style:none;margin:0;padding:0;counter-reset:s}
-.steps li{counter-increment:s;display:grid;grid-template-columns:26px 1fr;gap:8px;padding:3px 0;font-size:18px;line-height:1.4}
-.steps li::before{content:counter(s);font-family:var(--hf);font-weight:600;font-size:18px;color:var(--muted)}
-.tl{display:inline-flex;align-items:center;flex-wrap:wrap;gap:6px 12px;margin:12px 0 0;background:var(--card);border-radius:999px;padding:7px 18px;font-size:16px;color:var(--muted)}
-.tl b{font-family:var(--hf);font-weight:600;font-size:18px;color:var(--text);margin-right:4px}
-.tl svg{width:22px;height:12px;color:var(--muted);flex:none}
+.steps{list-style:none;margin:0;padding:0}
+.steps li{padding:2px 0;font-size:18px;line-height:1.4}
+.tl{margin:12px 0 0;font-size:16px;color:var(--muted)}
+.tl b{font-weight:600;color:var(--text)}
+.tl svg{width:20px;height:11px;color:var(--muted);vertical-align:middle;margin:0 6px}
 
-.result{background:var(--paper);border:1px solid var(--line);border-radius:18px;box-shadow:var(--lift);padding:16px 22px 14px;position:relative}
-.result::after{content:"";position:absolute;inset:8px -8px -8px 8px;background:var(--card);border-radius:18px;z-index:-1}
-.result .kick{font-size:15px;color:var(--muted);margin:0}
-.result h2{font-size:23px;line-height:1.2;margin:0 0 8px}
+.result{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:18px 22px 16px}
+.result .kick{font-size:15px;color:var(--muted);margin:0 0 6px}
+.result h2{font-size:26px;line-height:1.2;margin:12px 0 2px}
 .mb{display:grid;grid-template-columns:118px 1fr 84px;align-items:center;gap:10px;font-size:16px;margin:2px 0}
 .mb .lab{font-weight:600}
 .mb .bar{height:12px;background:var(--line);border-radius:6px;overflow:hidden}
 .mb .bar i{display:block;height:100%;border-radius:6px;width:var(--w)}
 .mb .v{font-family:var(--hf);font-weight:600;font-size:27px;text-align:right;line-height:1.1}
-.mbnote{font-size:15px;color:var(--muted);margin:2px 0 0}
-.fact{border-top:1px solid var(--line);margin:10px 0 0;padding-top:8px;font-size:16px;color:var(--muted)}
-.live1{margin:4px 0 0;font-size:16px;color:var(--muted)}.live1 b{color:var(--text);font-weight:600}
-.fact b{font-family:var(--hf);font-weight:600;font-size:22px;color:var(--text);margin-right:4px}
+.fact{margin:0;font-size:16px;color:var(--muted)}
+.fact b{color:var(--text);font-weight:600}
 
 /* ---------- tabs ---------- */
-.switch{border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:10px 0}
+.switch{padding:6px 0}
 .seg{position:relative;display:inline-grid;grid-template-columns:1fr 1fr;background:var(--card);border-radius:999px;padding:5px;box-shadow:inset 0 1px 2px rgba(43,38,32,.08)}
 .seg button{position:relative;z-index:1;border:0;background:none;min-height:48px;padding:0 26px;border-radius:999px;font-weight:600;font-size:18px;color:var(--muted);cursor:pointer;white-space:nowrap}
 .seg button[aria-selected=true]{color:var(--text)}
@@ -67,20 +62,20 @@ main{padding:24px 0 10px}
 .panel-head{display:flex;justify-content:space-between;align-items:end;gap:16px 24px;flex-wrap:wrap;margin-bottom:18px}
 .panel-head h2{font-size:32px;line-height:1.1;margin:0}
 
-.layer{background:var(--paper);border:1px solid var(--line);border-radius:18px;box-shadow:var(--lift);padding:26px 28px}
+.layer{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:26px 28px}
 .cols{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:24px;align-items:start}
 .stack{display:flex;flex-direction:column;gap:20px;min-width:0}
-.side{background:var(--card);border-radius:16px;padding:22px 24px}
+.side{border-top:1px solid var(--line);padding:18px 0 0}
 .side h3{font-size:22px;margin:0 0 8px}
 
 /* ---------- filter bar ---------- */
-.fbar{background:var(--card);border-radius:16px;padding:12px 18px 14px;margin:0 0 20px}
+.fbar{margin:0 0 22px}
 .frow{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:flex-end}
 .frow+.frow{border-top:1px solid var(--line);margin-top:12px;padding-top:12px}
 .fk{display:block;font-size:15px;color:var(--muted);margin-bottom:4px}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
-.ftog{display:none;min-height:44px;padding:0 14px;border:1px solid var(--line);background:var(--paper);border-radius:999px;font-weight:600;font-size:17px;cursor:pointer;align-items:center;gap:8px}
-.ftog svg{width:16px;height:16px}
+.flinks{display:flex;gap:4px 14px;align-items:center;flex-wrap:wrap}
+#fday{width:170px}#fwho{width:190px}#fsec{width:250px}
 .ftog[aria-expanded=true]{background:var(--text);color:var(--bg);border-color:var(--text)}
 .chip{min-height:44px;padding:0 13px;border:1px solid var(--line);background:var(--paper);border-radius:999px;font-size:17px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
 .chip:hover{border-color:#C9BBA3}
@@ -101,10 +96,10 @@ main{padding:24px 0 10px}
 .linkbtn{min-height:44px;padding:0 6px;border:0;background:none;font-weight:600;font-size:17px;color:var(--text);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 
 /* combobox */
-.combo{position:relative;max-width:360px;width:100%;flex:1 1 250px}
-.combo label{display:block;font-size:15px;color:var(--muted);margin-bottom:4px}
+.combo{position:relative;max-width:560px;width:100%;flex:1 1 300px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .combo label b{color:var(--text);font-weight:600}
-.combo input{width:100%;min-height:48px;border:1px solid var(--line);background:var(--paper);border-radius:12px;padding:0 44px 0 16px;font-size:19px;box-shadow:var(--lift2)}
+.combo input{width:100%;min-height:48px;border:1px solid var(--line);background:var(--paper);border-radius:12px;padding:0 44px 0 16px;font-size:19px}
 .combo .chev{position:absolute;right:14px;bottom:17px;width:14px;height:14px;pointer-events:none;color:var(--muted)}
 .combo ul{position:absolute;left:0;right:0;top:100%;margin:6px 0 0;padding:6px;list-style:none;background:var(--paper);border:1px solid var(--line);border-radius:12px;box-shadow:var(--lift);max-height:320px;overflow:auto;z-index:30}
 .combo li{padding:10px 12px;border-radius:8px;cursor:pointer;display:flex;justify-content:space-between;gap:12px;min-height:44px;align-items:center}
@@ -114,7 +109,7 @@ main{padding:24px 0 10px}
 
 .co{display:flex;align-items:baseline;gap:6px 12px;flex-wrap:wrap;margin:0 0 14px}
 .co h3{font-size:32px;line-height:1.1;margin:0}
-.co .tk{color:var(--muted);font-size:17px;font-weight:500}
+.co .tk{color:var(--muted);font-size:16px}
 .co .meta{color:var(--muted);font-size:16px;flex-basis:100%}
 
 .pills{display:flex;flex-wrap:wrap;gap:10px 18px;margin:0 0 18px;align-items:flex-end}
@@ -132,7 +127,7 @@ main{padding:24px 0 10px}
 .infotx{flex-basis:100%;margin:0;font-size:16px;color:var(--text);background:var(--card);border-radius:10px;padding:8px 12px;max-width:52ch}
 
 /* real move headline */
-.real{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:16px;margin-top:4px}
+.real{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-top:4px}
 .real .k{font-size:18px;color:var(--muted)}
 .real .num{font-size:60px;line-height:1}
 
@@ -144,15 +139,15 @@ main{padding:24px 0 10px}
 .sc-over{grid-column:2;grid-row:1 / -1;position:relative;pointer-events:none;z-index:2}
 .sc-line{position:absolute;top:22px;bottom:26px;width:0;border-left:3px solid var(--text);transform:translateX(-1.5px)}
 .lane{display:contents}
-.lane .who{grid-column:1;padding:10px 0;line-height:1.2;border-top:1px solid var(--line)}
+.lane .who{grid-column:1;padding:10px 0;line-height:1.2}
 .lane .who b{display:block;font-weight:600;font-size:17px}
 .lane .who .val{font-family:var(--hf);font-weight:600;font-size:24px;margin-top:2px;display:block}
 .lane .who .tag{display:inline-block;margin-top:4px;font-size:15px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:0 8px;line-height:1.4}
-.lane .trk{grid-column:2;position:relative;border-top:1px solid var(--line);min-height:68px}
+.lane .trk{grid-column:2;position:relative;min-height:64px}
 .lane .trk::before{content:"";position:absolute;left:0;right:0;top:50%;height:2px;background:var(--line);transform:translateY(-1px)}
 .gap{position:absolute;top:50%;height:14px;transform:translateY(-50%);border-radius:7px;opacity:.55}
 .dot{position:absolute;top:50%;width:18px;height:18px;border-radius:50%;transform:translate(-50%,-50%);border:3px solid var(--paper);box-shadow:0 1px 3px rgba(43,38,32,.35)}
-.lane .off{grid-column:3;border-top:1px solid var(--line);padding:10px 0;display:flex;flex-direction:column;justify-content:center;font-size:16px;color:var(--muted);line-height:1.2}
+.lane .off{grid-column:3;padding:10px 0;display:flex;flex-direction:column;justify-content:center;font-size:16px;color:var(--muted);line-height:1.2}
 .lane .off b{font-family:var(--hf);font-weight:600;font-size:24px;color:var(--text)}
 .badge{display:block;width:max-content;margin-top:4px;font-size:15px;font-weight:600;color:var(--text);background:var(--card);padding:1px 9px;border-radius:999px}
 .sc-axis{grid-column:2;position:relative;height:26px;border-top:1px solid var(--line);font-size:15px;color:var(--muted)}
@@ -166,7 +161,7 @@ main{padding:24px 0 10px}
 .empty p{color:var(--muted);margin:0 0 18px}
 
 /* glance chart */
-.glance{background:var(--paper);border:1px solid var(--line);border-radius:16px;box-shadow:var(--lift2);padding:18px 20px 14px}
+.glance{padding:8px 0 0}
 .glance h3{font-size:22px;margin:0 0 4px}
 .gwrap{position:relative;touch-action:manipulation}
 .gwrap svg{display:block;overflow:visible}
@@ -174,10 +169,11 @@ main{padding:24px 0 10px}
 .gwrap .rl{font-weight:600;font-size:15px}
 .gwrap .grid{stroke:var(--line);stroke-width:1}
 .gwrap .diag{stroke:#B3A68F;stroke-width:1.5;stroke-dasharray:5 4}
-.gd{r:3.5px;fill:#D5CAB6;opacity:.6;stroke:var(--paper);stroke-width:1}
-.gd.on{r:6px;opacity:.9;stroke-width:1.5}
+.gd{r:0px;opacity:0;stroke:var(--paper);stroke-width:1.5}
+.gwrap .zero{stroke:var(--text);stroke-width:1.5}
+.gd.on{r:5px;opacity:.92}
 .gd.on.cm{fill:var(--model)}.gd.on.cu{fill:var(--usual)}.gd.on.ct{fill:var(--tie)}
-.gd.hov{r:8px;opacity:1}
+.gd.hov{r:7.5px;opacity:1}
 .selm{pointer-events:none}
 .selm circle{fill:none;stroke:var(--text);stroke-width:2.5}
 .selm text{font-weight:600;fill:var(--text);paint-order:stroke;stroke:var(--paper);stroke-width:4px;stroke-linejoin:round}
@@ -190,15 +186,14 @@ main{padding:24px 0 10px}
 .gcap b{font-weight:600}
 
 /* week */
-.wmood{margin:0 0 12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:17px;color:var(--muted)}
-#week{margin-top:22px;display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1fr) minmax(0,1.3fr);gap:8px 32px;align-items:start}
+#week{margin-top:36px;display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1fr) minmax(0,1.3fr);gap:8px 32px;align-items:start}
 #week .note{grid-column:1 / -1;margin:4px 0 0}
 #week .sp{margin-top:0}
 #week .big{font-size:32px}
-.wk .kick{font-size:15px;color:var(--muted);margin:0}
-.wk .big{font-size:40px;line-height:1.05;margin:2px 0 10px}
-.pair{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--line)}
-.pair div{padding:10px 0 0}
+.wk .kick{display:block;font-family:var(--bf);font-weight:400;font-size:15px;color:var(--muted);margin-top:6px}
+.wk .big{font-size:40px;line-height:1.05;margin:0 0 10px}
+.pair{display:grid;grid-template-columns:1fr 1fr}
+.pair div{padding:0}
 .pair div+div{padding-left:18px;border-left:1px solid var(--line)}
 .pair .num{font-size:36px;line-height:1;display:block}
 .pair .lab{font-size:16px;font-weight:600}
@@ -214,9 +209,9 @@ main{padding:24px 0 10px}
 .ask h3{font-size:30px;line-height:1.15;margin:0}
 .l8{margin:0 0 14px}
 .l8 .k{font-size:15px;color:var(--muted);margin-bottom:4px}
-.guessrow{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:14px}
-.guessrow label{display:block;font-size:16px;color:var(--muted);margin-bottom:6px}
-.inbox{position:relative}
+.guessrow{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;padding-top:18px}
+.guessrow label{flex-basis:100%;font-size:16px;color:var(--muted);margin-bottom:-6px}
+.inbox{position:relative;width:max-content}
 .inbox input{width:190px;min-height:56px;border:2px solid var(--line);background:var(--paper);border-radius:12px;padding:0 40px 0 16px;font-family:var(--hf);font-weight:600;font-size:26px}
 .inbox input:focus{border-color:var(--you);outline:none;box-shadow:0 0 0 3px rgba(116,57,138,.18)}
 .inbox::after{content:"%";position:absolute;right:16px;bottom:13px;font-family:var(--hf);font-weight:600;font-size:22px;color:var(--muted)}
@@ -232,9 +227,9 @@ main{padding:24px 0 10px}
 .again{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-top:18px}
 .gsec label{display:block;font-size:15px;color:var(--muted);margin-bottom:4px}
 .gcard{position:relative;padding-top:20px}
-.gcard .gsec{position:absolute;top:18px;right:24px}
+.gcard .gsec{position:absolute;top:22px;right:24px}
 .gcard .gsec select{width:220px}
-.gcard .ask .co{padding-right:250px;min-height:68px;align-content:flex-end}
+.gcard .ask .co{padding-right:250px;min-height:48px;align-content:center}
 .scorecard{position:sticky;top:16px}
 .l8head{display:flex;justify-content:space-between;align-items:center;gap:8px 16px;flex-wrap:wrap;font-size:15px;color:var(--muted);margin-bottom:2px}
 .ulg{color:var(--usual);font-weight:600;display:inline-flex;align-items:center;gap:8px}
@@ -247,7 +242,7 @@ details .body p{margin:0 0 12px;font-size:18px}
 .fine{font-size:15px;color:var(--muted);padding:22px 0 30px;margin:0}
 
 .l8c{position:relative}
-.plot{position:relative;height:120px;margin:28px 0 0;display:grid;grid-template-columns:repeat(8,1fr);gap:10px;border-bottom:2px solid var(--line)}
+.plot{position:relative;height:120px;margin:28px 0 6px;display:grid;grid-template-columns:repeat(8,1fr);gap:10px;border-bottom:2px solid var(--line)}
 .plot .c{position:relative;height:100%}
 .plot .b{position:absolute;left:14%;right:14%;bottom:0;background:#C8B79C;border-radius:4px 4px 0 0}
 .plot .bv{position:absolute;left:-6px;right:-6px;text-align:center;font-size:16px;font-weight:600;line-height:20px;height:20px;z-index:4}
@@ -275,7 +270,7 @@ details .body p{margin:0 0 12px;font-size:18px}
   @keyframes grow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
   .l8 .lbl{animation:fade .4s ease both}
   @keyframes fade{from{opacity:0}to{opacity:1}}
-  .gd{transition:r .35s cubic-bezier(.3,.7,.2,1),opacity .35s ease,fill .35s ease}
+  .gd{transition:r .35s cubic-bezier(.3,.7,.2,1),opacity .35s ease,fill .35s ease,cx .5s cubic-bezier(.3,.7,.2,1),cy .5s cubic-bezier(.3,.7,.2,1)}
   .gd.pop{animation:pop .5s cubic-bezier(.3,.7,.2,1) both}
   @keyframes pop{from{opacity:0}}
   .selm{transition:transform .55s cubic-bezier(.3,.75,.2,1)}
@@ -293,32 +288,26 @@ details .body p{margin:0 0 12px;font-size:18px}
 @media (max-width:600px){
   .hero-grid{display:flex;flex-direction:column;gap:0;align-items:stretch}
   .hero-grid>.story{display:contents}
-  .byline{order:1}h1{order:2}.result{order:3;margin:4px 0 22px}.steps{order:4}.tlw{order:5}
+  h1{order:2}.result{order:3;margin:4px 0 22px}.steps{order:4}.tl{order:5}
   .wrap{padding:0 16px}
   .hero{padding:20px 0 20px}
   h1{font-size:33px}
   .result{padding:14px 16px 12px}
-  .result::after{inset:7px -6px -7px 6px}
   .result h2{font-size:21px}
   .mb{grid-template-columns:106px 1fr 72px;font-size:15px}
   .mb .v{font-size:23px}
-  .tl{border-radius:14px}
   .seg{display:grid;width:100%}
   .seg button{padding:0 8px;font-size:16px}
   .panel-head h2{font-size:26px}
-  .fbar{padding:12px 14px 14px;margin-left:-4px;margin-right:-4px}
   .frow{gap:12px}
   .fgrp,.fgrp .selbox,.fgrp select{width:100%}
   .chip{padding:0 12px}
-  .ftog{display:inline-flex}
-  .fbar:not(.open) .fmore{display:none}
-  .fbar:not(.open) .frow+.frow{border-top:0;margin-top:10px;padding-top:0}
-  .fbar.open #fr1{margin-top:12px}
+  .fbar .fgrp,.fbar .fgrp .selbox,.fbar select{width:100%!important}
+  .qp{width:100%}.qp .btn3{flex:1;justify-content:center}
   .lane .who .tag{border:0;padding:0;line-height:1.25}
   .splitlab{flex-wrap:wrap}
   .layer{padding:20px 16px;border-radius:16px}
-  .side{padding:18px 16px}
-  .glance{padding:16px 14px 12px}
+  .glance{padding:8px 0 0}
   .co h3{font-size:27px}
   .real .num{font-size:48px}
   .scale{grid-template-columns:86px minmax(0,1fr) 74px;column-gap:10px}
@@ -342,23 +331,20 @@ details .body p{margin:0 0 12px;font-size:18px}
 <header class="hero">
   <div class="wrap hero-grid">
     <div class="story">
-      <p class="byline">Student ML project, fall 2026</p>
       <h1>How far will a stock jump after earnings?</h1>
-      <ol class="steps">
-        <li><span>Earnings news makes stocks jump, up or down.</span></li>
-        <li><span>Simple guess: <b class="u">its usual jump</b>, the middle of its last 8.</span></li>
-        <li><span><b class="m">Our model</b>, a machine learning model, tries to beat it.</span></li>
-      </ol>
-      <div class="tlw"><p class="tl"><span><b>Nov 1</b>480 guesses locked</span><svg viewBox="0 0 22 12" aria-hidden="true"><path d="M1 6h18M14 1l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2"/></svg><span><b>Nov 2 to 6</b>138 reported</span></p></div>
+      <ul class="steps">
+        <li>Earnings news makes stocks jump, up or down.</li>
+        <li>Simple guess: <b class="u">its usual jump</b>, the middle of its last 8.</li>
+        <li><b class="m">Our model</b>, a machine learning model, tries to beat it.</li>
+      </ul>
+      <p class="tl"><b>Nov 1</b> 480 guesses locked <svg viewBox="0 0 22 12" aria-hidden="true"><path d="M1 6h18M14 1l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2"/></svg> <b>Nov 2 to 6</b> 138 reported</p>
     </div>
     <aside class="result" aria-label="The result">
-      <p class="kick">Past test · <span class="tnum" data-count="3382" data-dec="0">3,382</span> reports</p>
-      <h2>Our model missed by a little less.</h2>
+      <p class="kick">Average miss on <span class="tnum" data-count="3382" data-dec="0">3,382</span> past reports</p>
       <div class="mb"><span class="lab m">Our model</span><span class="bar" aria-hidden="true"><i class="m-fill" style="background:var(--model)"></i></span><span class="v m tnum" data-count="3.44" data-dec="2" data-suf="%">3.44%</span></div>
       <div class="mb"><span class="lab u">Its usual jump</span><span class="bar" aria-hidden="true"><i class="u-fill" style="background:var(--usual)"></i></span><span class="v u tnum" data-count="3.50" data-dec="2" data-suf="%">3.50%</span></div>
-      <p class="mbnote">Average miss. Shorter bar = smaller misses.</p>
-      <p class="fact"><b class="tnum"><span data-count="1.7" data-dec="1">1.7</span>%</b>smaller misses, short of our 3% goal</p>
-      <p class="live1">Live week, Nov 2 to 6: <b>a tie</b></p>
+      <h2><span class="tnum"><span data-count="1.7" data-dec="1">1.7</span>%</span> smaller misses.</h2>
+      <p class="fact">Short of our 3% goal. Live week: <b id="live1">even on average</b>.</p>
     </aside>
   </div>
 </header>
@@ -375,41 +361,30 @@ details .body p{margin:0 0 12px;font-size:18px}
 
 <main class="wrap">
   <section class="panel" id="p-live" role="tabpanel" aria-labelledby="tab-live">
-    <p class="wmood" id="wmood"></p>
-    <div class="fbar" id="fbar" role="group" aria-label="Filter the 138 companies">
-      <button class="ftog" type="button" id="ftog" aria-expanded="false" aria-controls="fr1"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4h12M4.5 8h7M7 12h2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span id="ftogt">Filters</span></button>
-      <div class="frow fmore" id="fr1">
-        <div class="fgrp" role="group" aria-labelledby="fdayk">
-          <span class="fk" id="fdayk">Report day, Nov</span>
-          <div class="chips" id="fday"></div>
-        </div>
-        <div class="fgrp" role="group" aria-labelledby="fwhok">
-          <span class="fk" id="fwhok">Who was closer</span>
-          <div class="chips" id="fwho"></div>
-        </div>
-      </div>
+    <div class="fbar" id="fbar" role="group" aria-label="Find a company">
       <div class="frow">
-        <div class="fgrp fmore">
-          <label class="fk" for="fsec">Sector</label>
-          <span class="selbox"><select id="fsec"></select><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M2 5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2"/></svg></span>
-        </div>
         <div class="combo" id="combo">
-          <label for="q" id="qlab">Pick one of 138 companies</label>
+          <label for="q" id="qlab" class="sr">Pick a company</label>
           <input id="q" type="text" role="combobox" aria-expanded="false" aria-controls="lb" aria-autocomplete="list" autocomplete="off" spellcheck="false">
           <svg class="chev" viewBox="0 0 14 14" aria-hidden="true"><path d="M2 5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2"/></svg>
           <ul id="lb" role="listbox" tabindex="-1" hidden></ul>
         </div>
         <div class="qp">
           <button class="btn3" type="button" id="surprise"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="1.5" width="13" height="13" rx="3" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="5.2" cy="5.2" r="1.3" fill="currentColor"/><circle cx="10.8" cy="10.8" r="1.3" fill="currentColor"/><circle cx="8" cy="8" r="1.3" fill="currentColor"/></svg>Surprise me</button>
-          <button class="btn3" type="button" id="biggest"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 14h12M4 14V9M8 14V3M12 14V7" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>Biggest jump</button>
-          <button class="linkbtn" type="button" id="fclear" hidden>Clear filters</button>
+          <button class="btn3 ftog" type="button" id="ftog" aria-expanded="false" aria-controls="fr1"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4h12M4.5 8h7M7 12h2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span id="ftogt">Filters</span></button>
         </div>
+      </div>
+      <div class="frow fmore" id="fr1" hidden>
+        <div class="fgrp"><label class="fk" for="fday">Day</label><span class="selbox"><select id="fday"></select><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M2 5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2"/></svg></span></div>
+        <div class="fgrp"><label class="fk" for="fwho">Who was closer</label><span class="selbox"><select id="fwho"></select><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M2 5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2"/></svg></span></div>
+        <div class="fgrp"><label class="fk" for="fsec">Sector</label><span class="selbox"><select id="fsec"></select><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M2 5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2"/></svg></span></div>
+        <div class="flinks"><button class="linkbtn" type="button" id="biggest">Biggest jump</button><button class="linkbtn" type="button" id="fclear" hidden>Clear</button></div>
       </div>
     </div>
     <div class="cols">
       <article class="layer" id="liveout" aria-live="polite"></article>
       <section class="glance" aria-labelledby="gh">
-        <h3 id="gh">All 138 at a glance</h3>
+        <h3 id="gh">Who was closer, company by company</h3>
         <div class="gwrap" id="gwrap"></div>
         <p class="gcap" id="gcap"></p>
       </section>
@@ -424,7 +399,7 @@ details .body p{margin:0 0 12px;font-size:18px}
     <div class="cols">
       <article class="layer gcard">
         <div class="gsec">
-          <label for="gsec">Pick a sector</label>
+          <label for="gsec" class="sr">Pick a sector</label>
           <span class="selbox"><select id="gsec"></select><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M2 5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2"/></svg></span>
         </div>
         <div id="game"></div>
@@ -552,7 +527,7 @@ function scaleHTML(real, rows){
         <span class="gap" style="background:${COL[r.key]};left:${rp}%;width:0" data-l="${lo}" data-w="${w}"></span>
         <span class="dot" style="background:${COL[r.key]};left:${rp}%" data-p="${p}"></span>
       </div>
-      <div class="off stage" style="${gr}">off by<b class="tnum">${(offs[i]/10).toFixed(1)}%</b>${best.includes(r.key) ? '<span class="badge">closest</span>' : ''}</div>
+      <div class="off stage" style="${gr}">off by<b class="tnum">${(offs[i]/10).toFixed(1)}%</b></div>
     </div>`;
   }).join('');
   return `<div class="scale" style="grid-template-rows:24px repeat(${rows.length},auto) 26px" role="img" aria-label="Real jump ${pct(real)}. ${rows.map((r,i)=>`${NAME[r.key]} ${pct(r.val)}, off by ${(offs[i]/10).toFixed(1)}%`).join('. ')}.">
@@ -598,36 +573,20 @@ const FL = () => L.filter(c => match(c));
 let liveCur = L.find(c => c.t === 'PLTR') || L[0];
 let liveToken = 0;
 
-const WHO = [['', 'All', null], ['model', 'Our model', 'var(--model)'], ['usual', 'Its usual jump', 'var(--usual)'], ['tie', 'Tie', 'var(--tie)']];
-$('#fday').innerHTML = [['', 'All']].concat(DAYS.map(d => [d, d])).map(([v]) => {
-  if (!v) return `<button type="button" class="chip" data-day="" aria-pressed="true">All</button>`;
-  const [,m,dd] = v.split('-');
-  return `<button type="button" class="chip" data-day="${v}" aria-pressed="false" aria-label="${shortDay(v)}">${wday(v)} ${+dd}</button>`;
-}).join('');
-$('#fwho').innerHTML = WHO.filter(([v]) => v !== 'tie' || L.some(c => c.who === 'tie')).map(([v, l, c]) => `<button type="button" class="chip" data-who="${v}" aria-pressed="${!v}">${c ? `<span class="sw" style="background:${c}"></span>` : ''}${l} <span class="ct"></span></button>`).join('');
-
-(function(){
-  const cat = v => v < 20 ? 0 : v <= 30 ? 1 : 2;
-  const cnt = [0,0,0]; L.forEach(c => cnt[cat(c.vix)]++);
-  const top = cnt.indexOf(Math.max(...cnt));
-  const [cl, w] = [['p-g','Calm'],['p-y','A little nervous'],['p-r','Nervous']][top];
-  $('#wmood').innerHTML = `Market mood that week <span class="pill ${cl}">${w}</span>`;
-})();
+const HASTIE = L.some(c => c.who === 'tie');
 function syncControls(){
-  const sel = $('#fsec');
-  const cnt = s => L.filter(c => match(c, 'sec') && (!s || c.s === s)).length;
-  sel.innerHTML = `<option value="">All sectors (${cnt('')})</option>` + SECTORS.map(s => { const k = cnt(s); return `<option value="${esc(s)}"${k || s === F.sec ? '' : ' disabled'}>${esc(s)} (${k})</option>`; }).join('');
-  sel.value = F.sec;
-  document.querySelectorAll('#fday .chip').forEach(b => b.setAttribute('aria-pressed', b.dataset.day === F.day));
-  document.querySelectorAll('#fwho .chip').forEach(b => {
-    b.setAttribute('aria-pressed', b.dataset.who === F.who);
-    b.querySelector('.ct').textContent = L.filter(c => match(c, 'who') && (!b.dataset.who || c.who === b.dataset.who)).length;
-  });
-  const n = FL().length, on = !!(F.sec || F.day || F.who);
+  const opt = (v, t, k, cur) => `<option value="${esc(v)}"${k || v === cur || !v ? '' : ' disabled'}>${esc(t)} (${k})</option>`;
+  const cS = v => L.filter(c => match(c, 'sec') && (!v || c.s === v)).length;
+  const cD = v => L.filter(c => match(c, 'day') && (!v || c.d === v)).length;
+  const cW = v => L.filter(c => match(c, 'who') && (!v || c.who === v)).length;
+  $('#fsec').innerHTML = opt('', 'All sectors', cS(''), F.sec) + SECTORS.map(v => opt(v, v, cS(v), F.sec)).join('');
+  $('#fday').innerHTML = opt('', 'All days', cD(''), F.day) + DAYS.map(v => opt(v, shortDay(v), cD(v), F.day)).join('');
+  $('#fwho').innerHTML = opt('', 'Both', cW(''), F.who) + [['model','Our model'],['usual','Its usual jump']].concat(HASTIE ? [['tie','Tie']] : []).map(([v, t]) => opt(v, t, cW(v), F.who)).join('');
+  $('#fsec').value = F.sec; $('#fday').value = F.day; $('#fwho').value = F.who;
+  const n = FL().length, act = [F.sec, F.day, F.who].filter(Boolean).length;
   $('#qlab').innerHTML = n === N ? `Pick one of ${N} companies` : n ? `Pick one of <b class="tnum">${n}</b> of ${N} companies` : `<b>0</b> of ${N} companies match`;
-  const act = [F.sec, F.day, F.who].filter(Boolean).length;
   $('#ftogt').textContent = act ? `Filters (${act})` : 'Filters';
-  $('#fclear').hidden = !on;
+  $('#fclear').hidden = !act;
   $('#surprise').disabled = $('#biggest').disabled = !n;
 }
 function applyFilters(){
@@ -639,10 +598,10 @@ function applyFilters(){
 }
 function clearFilters(){ F.sec = F.day = F.who = ''; applyFilters(); }
 $('#fsec').addEventListener('change', e => { F.sec = e.target.value; applyFilters(); });
-$('#fday').addEventListener('click', e => { const b = e.target.closest('.chip'); if (b){ F.day = b.dataset.day; applyFilters(); } });
-$('#fwho').addEventListener('click', e => { const b = e.target.closest('.chip'); if (b){ F.who = b.dataset.who; applyFilters(); } });
+$('#fday').addEventListener('change', e => { F.day = e.target.value; applyFilters(); });
+$('#fwho').addEventListener('change', e => { F.who = e.target.value; applyFilters(); });
 $('#fclear').addEventListener('click', clearFilters);
-$('#ftog').addEventListener('click', e => { const o = !$('#fbar').classList.contains('open'); $('#fbar').classList.toggle('open', o); e.currentTarget.setAttribute('aria-expanded', o); });
+$('#ftog').addEventListener('click', e => { const o = $('#fr1').hidden; $('#fr1').hidden = !o; e.currentTarget.setAttribute('aria-expanded', o); });
 $('#surprise').addEventListener('click', () => {
   const list = FL(); if (!list.length) return;
   const pool = list.length > 1 ? list.filter(c => c !== liveCur) : list;
@@ -658,48 +617,52 @@ function renderEmpty(){
   liveCur = null;
   q.value = '';
   $('#liveout').innerHTML = `<div class="empty"><h3>No companies match</h3><p>Try fewer filters.</p><button class="btn2" type="button" id="eclear">Clear filters</button></div>`;
-  $('#eclear').addEventListener('click', () => { clearFilters(); $('#fclear').hidden || $('#fclear').focus(); });
+  $('#eclear').addEventListener('click', () => { clearFilters(); q.focus({preventScroll:true}); closeList(); });
 }
 
 /* ---------- live card ---------- */
 function renderLive(c, first){
   const tok = ++liveToken;
-  const r = c.v63 > 0 ? c.v21 / c.v63 : 1;
   const out = $('#liveout');
   out.classList.remove('liveenter'); void out.offsetWidth; out.classList.add('liveenter');
   out.innerHTML = `
-    <div class="co"><h3>${esc(c.n)}</h3><span class="tk">${esc(c.t)}</span><span class="meta">${esc(c.s)}, reported ${shortDay(c.d)}</span></div>
-    ${pillsHTML(c.vix, r, true)}
+    <div class="co"><h3>${esc(c.n)}</h3><span class="tk">${esc(c.t)} · reported ${shortDay(c.d)}</span></div>
     <div class="real"><span class="k">The real jump</span><span class="num tnum" id="lnum">${pct(c.y)}</span></div>
-    ${scaleHTML(c.y, [{key:'model', val:c.m, tag:'guessed Nov 1'}, {key:'usual', val:c.u}])}`;
+    ${scaleHTML(c.y, [{key:'model', val:c.m}, {key:'usual', val:c.u}])}`;
   countUp($('#lnum'), +f1(c.y), 1, first ? 900 : 600, '%');
   (async () => { await wait(first ? 350 : 120); if (tok === liveToken) playScale(out, !first); })();
 }
 
 /* ---------- week box ---------- */
-function renderWeek(){
-  let sm = 0, su = 0; const k = {model:0, usual:0, tie:0};
-  L.forEach(c => {                                  // official week comparison: exact, unrounded misses
+/* official week comparison: exact, unrounded misses */
+const WK = (() => {
+  let sm = 0, su = 0, wm = 0, wu = 0; const k = {model:0, usual:0, tie:0};
+  L.forEach(c => {
     const em = Math.abs(c.m - c.y), eu = Math.abs(c.u - c.y);
-    sm += em; su += eu; k[em < eu ? 'model' : eu < em ? 'usual' : 'tie']++;
+    sm += em; su += eu;
+    if (em < eu){ k.model++; wm += eu - em; } else if (eu < em){ k.usual++; wu += em - eu; } else k.tie++;
   });
-  const am = sm / N, au = su / N;
-  const head = am.toFixed(2) === au.toFixed(2) ? 'A tie on average' : am < au ? 'Our model missed less' : 'Its usual jump missed less';
+  const am = sm / N, au = su / N, even = am.toFixed(2) === au.toFixed(2);
+  const mm = k.model ? wm / k.model : 0, mu = k.usual ? wu / k.usual : 0;   // mean winning margins
+  return {am, au, k, even, mm, mu, story: even && k.usual > k.model && mm > mu};
+})();
+$('#live1').textContent = WK.even ? 'even on average' : WK.am < WK.au ? 'our model missed less' : 'its usual jump missed less';
+function renderWeek(){
+  const {am, au, k} = WK;
+  const head = WK.even ? 'Even on average' : am < au ? 'Our model missed less' : 'Its usual jump missed less';
   const P = x => Math.round(x / N * 100);
   $('#week').innerHTML = `
-    <div><p class="kick">Whole live week · ${N} companies</p>
-    <h3 class="big">${head}</h3></div>
+    <h3 class="big">${head}<span class="kick">The whole live week</span></h3>
     <div><div class="pair">
       <div><span class="num m tnum" data-to="${am.toFixed(2)}">${am.toFixed(2)}%</span><span class="lab m">Our model</span></div>
       <div><span class="num u tnum" data-to="${au.toFixed(2)}">${au.toFixed(2)}%</span><span class="lab u">Its usual jump</span></div>
     </div>
     <p class="cap">Average miss</p></div>
     <div class="sp">
-      <p class="cap" style="margin:0">Closer, company by company</p>
       <div class="split" aria-hidden="true"><i style="background:var(--model);width:0" data-w="${k.model/N*100}%"></i>${k.tie ? `<i style="background:var(--tie);width:0" data-w="${k.tie/N*100}%"></i>` : ''}<i style="background:var(--usual);width:0" data-w="${k.usual/N*100}%"></i></div>
-      <div class="splitlab"><span class="m">Our model closer <b>${P(k.model)}%</b></span>${k.tie ? `<span style="color:var(--tie)">Tie <b>${P(k.tie)}%</b></span>` : ''}<span class="u"><b>${P(k.usual)}%</b> Its usual jump</span></div>
-    </div>
-    <p class="note">One week can be luck. The 3,382-report test counts more.</p>`;
+      <div class="splitlab"><span class="m">Our model closer <b>${P(k.model)}%</b></span>${k.tie ? `<span style="color:var(--tie)">Tie <b>${P(k.tie)}%</b></span>` : ''}<span class="u">Its usual jump closer <b>${P(k.usual)}%</b></span></div>
+      ${WK.story ? `<p class="cap" style="margin-top:8px;color:var(--text)">Its usual jump was closer more often, but our model's wins were bigger.</p>` : ''}
+    </div>`;
 }
 function growWeek(){
   document.querySelectorAll('#week .pair .num').forEach(el => countUp(el, +el.dataset.to, 2, 900, '%'));
@@ -711,31 +674,41 @@ function growWeek(){
 /* ---------- glance chart ---------- */
 const gw = $('#gwrap');
 let GX = null, hovC = null, tipC = null, lastPT = 'mouse', glanceFirst = true;
-const GMAX = Math.max(30, Math.ceil(Math.max(...L.map(c => Math.max(c.om, c.ou))) / 10) * 10);
-const sq = v => Math.sqrt(Math.max(0, v) / GMAX);
+const DCLIP = 4, DR = 5, DD = 2 * DR + 1;    // clip at +-4 (most companies sit within 2.5), dot radius, min spacing
+L.forEach(c => { c.dd = Math.abs(c.u - c.y) - Math.abs(c.m - c.y); });   // >0: our model closer (exact)
+function swarm(list, X){
+  const lv = new Map(), pos = new Map();
+  let maxL = 0;
+  list.map(c => [c, X(c.dd)]).sort((a, b) => a[1] - b[1]).forEach(([c, x]) => {
+    for (let k = 0; ; k++){
+      for (const l of k ? [k, -k] : [0]){
+        const row = lv.get(l) || [];
+        if (row.every(px => Math.abs(px - x) >= DD)){ row.push(x); lv.set(l, row); pos.set(c, {x, l}); maxL = Math.max(maxL, k); return; }
+      }
+    }
+  });
+  return {pos, maxL};
+}
 function buildGlance(){
   const W = gw.clientWidth; if (!W) return;
-  const ml = 34, mr = 10, mt = 30, mb = 46;
-  const S = Math.min(W - ml - mr, 380);
-  const ox = ml + Math.max(0, (W - ml - mr - S) / 2), H = S + mt + mb;
-  const X = v => ox + sq(v) * S, Y = v => mt + S - sq(v) * S;
-  const ticks = [0, 1, 2, 5, 10, 20, GMAX].filter((v, i, a) => a.indexOf(v) === i && v <= GMAX);
-  const grid = ticks.map(v => `<line class="grid" x1="${X(v)}" x2="${X(v)}" y1="${mt}" y2="${mt+S}"/><line class="grid" x1="${ox}" x2="${ox+S}" y1="${Y(v)}" y2="${Y(v)}"/>
-    <text x="${X(v)}" y="${mt+S+18}" text-anchor="middle">${v}</text><text x="${ox-7}" y="${Y(v)+5}" text-anchor="end">${v}</text>`).join('');
-  const dots = L.map((c, i) => `<circle class="gd" data-i="${i}" cx="${X(c.ou).toFixed(1)}" cy="${Y(c.om).toFixed(1)}"/>`).join('');
-  gw.innerHTML = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Chart of all ${N} companies: how far off its usual jump was against how far off our model was. Use the company picker to choose one.">
-    ${grid}
-    <line class="diag" x1="${X(0)}" y1="${Y(0)}" x2="${X(GMAX)}" y2="${Y(GMAX)}"/>
-    <text class="rl" x="${ox+S-6}" y="${mt+S-10}" text-anchor="end" style="fill:var(--model)">Our model closer</text>
-    <text class="rl" x="${ox+8}" y="${mt+16}" style="fill:var(--usual)">Its usual jump closer</text>
-    <text x="${ox}" y="${mt-12}" style="fill:var(--text)">Our model, off by (%)</text>
-    <text x="${ox+S}" y="${mt+S+40}" text-anchor="end" style="fill:var(--text)">Its usual jump, off by (%)</text>
+  const pad = 14, cx = W / 2, half = W / 2 - pad - DR;
+  const X = d => cx + Math.max(-DCLIP, Math.min(DCLIP, d)) / DCLIP * half;
+  const full = swarm(L, X).maxL;
+  const top = 30, y0 = top + full * DD + DR + 4, axY = y0 + full * DD + DR + 10, H = axY + 30;
+  const ticks = [-4, 0, 4].map(v => `<text x="${X(v)}" y="${axY+22}" text-anchor="${v === -DCLIP ? 'start' : v === DCLIP ? 'end' : 'middle'}">${v === 0 ? '0' : '4%+'}</text>`).join('');
+  const dots = L.map((c, i) => `<circle class="gd" data-i="${i}" style="cx:${X(c.dd).toFixed(1)}px;cy:${y0}px"/>`).join('');
+  gw.innerHTML = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Each company placed by how much closer one guess was. Right of center: our model closer. Left: its usual jump closer. Use the company picker to choose one.">
+    <text class="rl" x="${pad - 6}" y="16" style="fill:var(--usual)">← Its usual jump</text>
+    <text class="rl" x="${W - pad + 6}" y="16" text-anchor="end" style="fill:var(--model)">Our model →</text>
+    <line class="grid" x1="${pad - 6}" x2="${W - pad + 6}" y1="${axY}" y2="${axY}"/>
+    <line class="zero" x1="${cx}" x2="${cx}" y1="${top - 4}" y2="${axY + 5}"/>
+    ${ticks}
     <g class="dots">${dots}</g>
-    <g class="selm"><circle r="11"/><text y="-16" text-anchor="middle"></text></g>
+    <g class="selm"><circle r="10"/><text y="-15" text-anchor="middle"></text></g>
   </svg><div class="gtip" hidden></div>`;
-  GX = {X, Y, ox, S, W, H, mt, circles:[...gw.querySelectorAll('.gd')]};
+  GX = {X, W, H, y0, top, pos:new Map(), circles:[...gw.querySelectorAll('.gd')]};
   if (glanceFirst && !RM){
-    GX.circles.forEach((el, i) => { el.classList.add('pop'); el.style.animationDelay = (Math.min(L[i].om, L[i].ou) * 40 + (i % 9) * 25) + 'ms'; });
+    GX.circles.forEach((el, i) => { el.classList.add('pop'); el.style.animationDelay = (Math.min(Math.abs(L[i].dd), 4) * 110 + (i % 7) * 20) + 'ms'; });
     glanceFirst = false;
   }
   updateGlance();
@@ -743,43 +716,42 @@ function buildGlance(){
 function updateGlance(){
   if (!GX) return;
   const g = gw.querySelector('.dots');
-  const on = [], k = {model:0, usual:0, tie:0};
+  const list = FL();
+  const {pos} = swarm(list, GX.X);
+  GX.pos = new Map();
   GX.circles.forEach((el, i) => {
-    const c = L[i], m = match(c);
-    el.setAttribute('class', 'gd' + (m ? ' on ' + (c.who === 'model' ? 'cm' : c.who === 'usual' ? 'cu' : 'ct') : '') + (el.classList.contains('pop') ? ' pop' : ''));
-    if (m){ on.push(el); k[c.who]++; }
+    const c = L[i], p = pos.get(c);
+    el.setAttribute('class', 'gd' + (p ? ' on ' + (c.who === 'model' ? 'cm' : c.who === 'usual' ? 'cu' : 'ct') : ' off') + (el.classList.contains('pop') ? ' pop' : ''));
+    if (p){
+      const y = GX.y0 - p.l * DD;
+      el.style.cx = p.x.toFixed(1) + 'px'; el.style.cy = y.toFixed(1) + 'px';
+      GX.pos.set(c, {x:p.x, y});
+      g.appendChild(el);
+    }
   });
-  on.forEach(el => g.appendChild(el));        // matching dots on top
-  const n = on.length;
-  $('#gh').textContent = n === N ? `All ${N} at a glance` : `Showing ${n} of ${N}`;
-  $('#gcap').innerHTML = n
-    ? `Each dot is a company. Closer: <b class="m">our model ${k.model}</b>, <b class="u">its usual jump ${k.usual}</b>${k.tie ? `, <b style="color:var(--tie)">tie ${k.tie}</b>` : ''}.`
-    : 'No companies match these filters.';
+  const n = list.length;
+  $('#gh').textContent = n === N ? 'Who was closer, company by company' : `Showing ${n} of ${N}`;
+  $('#gcap').textContent = n ? 'Each dot is a company. Farther out = bigger difference.' : 'No companies match these filters.';
   moveSel();
   hideTip();
 }
 function moveSel(){
   if (!GX) return;
   const sm = gw.querySelector('.selm');
-  const show = FL().includes(liveCur);
-  sm.style.display = show ? '' : 'none';
-  if (!show) return;
-  const x = GX.X(liveCur.ou), y = GX.Y(liveCur.om);
-  sm.style.transform = `translate(${x}px,${y}px)`;
+  const p = liveCur && GX.pos.get(liveCur);
+  sm.style.display = p ? '' : 'none';
+  if (!p) return;
+  sm.style.transform = `translate(${p.x}px,${p.y}px)`;
   const t = sm.querySelector('text');
   t.textContent = liveCur.t;
-  t.setAttribute('text-anchor', x > GX.W - 40 ? 'end' : x < 40 ? 'start' : 'middle');
-  t.setAttribute('y', y < GX.mt + 24 ? 28 : -16);
+  t.setAttribute('text-anchor', p.x > GX.W - 40 ? 'end' : p.x < 40 ? 'start' : 'middle');
+  t.setAttribute('y', p.y < GX.top + 20 ? 27 : -15);
 }
 function nearest(ev){
   const r = gw.querySelector('svg').getBoundingClientRect();
   const px = ev.clientX - r.left, py = ev.clientY - r.top;
-  let best = null, bd = 24;
-  L.forEach((c, i) => {
-    if (!match(c)) return;
-    const d = Math.hypot(GX.X(c.ou) - px, GX.Y(c.om) - py);
-    if (d < bd){ bd = d; best = c; }
-  });
+  let best = null, bd = 22;
+  GX.pos.forEach((p, c) => { const d = Math.hypot(p.x - px, p.y - py); if (d < bd){ bd = d; best = c; } });
   return best;
 }
 function showTip(c, touch){
@@ -789,10 +761,11 @@ function showTip(c, touch){
   tip.className = 'gtip' + (touch && narrow ? ' touch' : '');
   tip.innerHTML = `<b>${esc(c.n)}</b> ${esc(c.t)}<br><span class="tm">Our model off by ${c.om.toFixed(1)}%</span><br><span class="tu">Its usual jump off by ${c.ou.toFixed(1)}%</span>${touch && narrow ? `<button type="button">See details</button>` : ''}`;
   tip.hidden = false;
-  const x = GX.X(c.ou), y = GX.Y(c.om), tw = tip.offsetWidth, th = tip.offsetHeight;
+  const pp = GX.pos.get(c); if (!pp) return;
+  const x = pp.x, y = pp.y, tw = tip.offsetWidth, th = tip.offsetHeight;
   const left = Math.min(Math.max(0, x - tw / 2), GX.W - tw);
   // keep clear of the selected company's label (sits just above its dot)
-  const sel = liveCur && FL().includes(liveCur) ? {x:GX.X(liveCur.ou), y:GX.Y(liveCur.om)} : null;
+  const sel = liveCur && liveCur !== c ? GX.pos.get(liveCur) || null : (liveCur === c ? pp : null);
   const hits = t => sel && left < sel.x + 30 && left + tw > sel.x - 30 && t < sel.y + 12 && t + th > sel.y - 36;
   const cands = [y - th - 14, y + 16, sel ? sel.y + 16 : y + 16, sel ? sel.y - th - 40 : y - th - 14];
   let top = cands.find(t => t >= -4 && t + th <= GX.H + 4 && !hits(t));
@@ -881,12 +854,11 @@ function newRound(){
   const nm = (D.names[G.t] || G.t).replace(/\s*&$/, '');
   $('#game').innerHTML = `
     <div class="ask">
-      <div class="co"><h3>${esc(nm)}</h3><span class="tk">${esc(G.t)}</span><span class="meta">${esc(G.s)} · ${day(G.d)} · How big was the jump?</span></div>
-      ${pillsHTML(G.vix, G.r).replace('class="pills"', 'class="pills" style="margin-bottom:8px"')}
-      <p class="cluehint">A nervous market or a stock moving more often comes with bigger jumps.</p>
-      <div class="l8"><div class="l8head"><span>Its last 8 jumps (%)</span><span class="ulg">Its usual jump ${pct(G.u)}</span></div>${l8SVG(G.l8, G.u)}</div>
+      <div class="co"><h3>${esc(nm)}</h3><span class="tk">${esc(G.t)} · ${day(G.d)}</span></div>
+      ${pillsHTML(G.vix, G.r)}
+      <div class="l8"><div class="l8head"><span>Its last 8 jumps, oldest to newest (%)</span><span class="ulg">Its usual jump ${pct(G.u)}</span></div>${l8SVG(G.l8, G.u)}</div>
       <form class="guessrow" id="gf" novalidate>
-        <div><label for="g">Your guess (size, %)</label><div class="inbox"><input id="g" type="text" inputmode="decimal" autocomplete="off" placeholder="0.0"></div></div>
+        <label for="g">How big was the jump? Your guess</label><div class="inbox"><input id="g" type="text" inputmode="decimal" autocomplete="off" placeholder="0.0"></div>
         <button class="btn" type="submit">Show me</button>
       </form>
       <p class="hint" id="hint" aria-live="polite"></p>
@@ -907,13 +879,12 @@ function l8SVG(arr, u){
   }).join('');
   return `<div class="l8c" role="img" aria-label="Its last 8 jumps, oldest to newest: ${arr.map(f1).join(', ')} percent. Its usual jump is ${pct(u)}.">
     <div class="plot">${bars}<span class="uline" style="bottom:${(u / mx * 100).toFixed(2)}%"></span></div>
-    <div class="ends" aria-hidden="true"><span>oldest</span><span>newest</span></div>
   </div>`;
 }
 async function reveal(){
   const raw = $('#g').value.trim().replace(',', '.').replace('%','');
   const hint = $('#hint');
-  if (!raw){ hint.textContent = 'Type a number first, like 4.5. Use the bars above as a clue.'; $('#g').focus(); return; }
+  if (!raw){ hint.textContent = 'Type a number first, like 4.5. Tip: a nervous market or a stock moving more than usual often means a bigger jump.'; $('#g').focus(); return; }
   const g = Number(raw);
   if (!isFinite(g)){ hint.textContent = 'That needs to be a number, like 4.5.'; return; }
   if (g < 0){ hint.textContent = 'We only look at the size of the jump, so use a positive number.'; return; }
@@ -938,11 +909,11 @@ async function reveal(){
 }
 function renderTally(){
   if (!played){
-    $('#tally').innerHTML = `<h3 style="font-size:22px;margin:0 0 8px">Your score</h3><p class="k" style="margin:0">Play a round to start your score.</p>`;
+    $('#tally').innerHTML = `<h3 style="font-size:22px;margin:0 0 4px">Your score</h3><p class="k" style="margin:0">Make a guess to start.</p>`;
     return;
   }
   const ib = infoBtn('How is the score counted?', 'You beat our model when your guess was closer to the real jump. Ties don\'t count.');
-  $('#tally').innerHTML = `<h3 style="font-size:22px;margin:0 0 8px">Your score</h3>
+  $('#tally').innerHTML = `<h3 style="font-size:22px;margin:0 0 4px">Your score</h3>
     <span class="k">You beat our model ${ib.btn}</span>
     <span class="num tnum"><span class="y">${beat}</span> <span style="color:var(--muted);font-size:.55em">of ${played}</span></span>${ib.box}`;
 }
@@ -980,9 +951,10 @@ seg.addEventListener('keydown', e => {
 const P = x => (x * 100).toFixed(1) + '%';
 $('#how').innerHTML = `
   <p><b class="u">Its usual jump</b> is the baseline: the median absolute size of the company's last 8 earnings moves.</p>
-  <p><b class="m">Our model</b> is a LightGBM model. Along with past moves, it looks at the stock's volatility over the past month compared with the 3 months before (the "Moving lately" pill) and the VIX market fear gauge (the "Market mood" pill). The pills are inputs the model also looks at, not the reason for any one guess.</p>
+  <p><b class="m">Our model</b> is a LightGBM model. Along with past moves, it looks at the stock's volatility over the past month compared with the 3 months before (the "Moving lately" pill) and the VIX market fear gauge (the "Market mood" pill). The pills in the game are inputs the model also looks at, not the reason for any one guess.</p>
   <p>The model was locked and run once on a held-out lockbox of ${D.met.n.toLocaleString('en-US')} past reports (2025 to Sep 2026). The likely range of the improvement is ${P(D.met.lo)} to ${P(D.met.hi)} smaller misses, and our model was closer on about ${Math.round(D.met.wr*100)}% of reports.</p>
-  <p>All misses are in percentage points. Week totals, the "Who was closer" filter and the dot chart compare exact numbers. Each company's "closest" badge compares the rounded numbers shown on screen, so a near-tie can read as a tie there.</p>`;
+  <p>The live week's average misses were ${WK.even ? WK.am.toFixed(2) + ' for both' : WK.am.toFixed(2) + ' for our model and ' + WK.au.toFixed(2) + ' for the usual jump'}; the usual jump was closer for ${WK.k.usual} companies and our model for ${WK.k.model}${WK.mm > WK.mu ? ', with bigger margins when our model was closer' : ''}. One week can be luck, so the ${D.met.n.toLocaleString('en-US')}-report test counts more.</p>
+  <p>All misses are in percentage points. Week totals, the "Who was closer" filter and the dot chart compare exact numbers. Each company's "was closest" line compares the rounded numbers shown on screen, so a near-tie can read as a tie there.</p>`;
 
 /* ---------- init ---------- */
 syncControls();
