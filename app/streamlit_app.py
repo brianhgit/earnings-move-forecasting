@@ -255,10 +255,10 @@ with tab_week:
                 "Pick one to see how we did.</p>",
                 unsafe_allow_html=True,
             )
-        if "PLTR" in options and (not graded or "PLTR" in reported):
-            default = "PLTR"
-        else:
-            default = reported[0] if reported else options[0]
+        if reported:
+            # Once graded, only list the companies that reported during the test week.
+            options = reported
+        default = "PLTR" if "PLTR" in options else options[0]
         ticker = st.selectbox(
             "Pick a company", options, index=options.index(default),
             format_func=lambda t: f"{name_of(t)} ({t})", label_visibility="collapsed",
