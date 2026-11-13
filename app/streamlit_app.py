@@ -1,105 +1,123 @@
-"""Beat the Baseline: forecast app.
+"""Beat the Baseline: the app.
 
     streamlit run app/streamlit_app.py      (make app)
 
 Reads only files the pipeline wrote. It never trains, downloads or changes anything,
-so what it shows is exactly what was locked.
+so what it shows is exactly what was locked. The page itself is app/page.html; this file
+gathers the numbers, drops them into the page and shows it full screen.
 
-Where it reads from, first match wins:
-  1. real results (results/, live/drops/)          once the lockbox has been opened
-  2. the fake-data demo (results/demo/)            after `make demo`
-  3. the frozen sample run (fixtures/demo_results/) always present, so the app can be
-                                                   built before any pipeline step exists
-Sources 2 and 3 show a DEMO DATA banner.
+Data it reads:
+  live/drops/<newest scored drop>/forecasts.csv + scores.csv   "Our live test"
+  results/runs/<lockbox run>/predictions.parquet               "Try a past report"
+  app/past_clues.csv                                           last 8 moves, jumpiness and past-month return for each past report
+  results/runs/<lockbox run>/metrics.json                      the locked-test result
+  app/companies.csv                                            ticker,name (from the universe file)
 """
 
 from __future__ import annotations
 
+import json
+import re
 import sys
 from pathlib import Path
 
+import pandas as pd
 import streamlit as st
+import streamlit.components.v1 as components
 
 ROOT = Path(__file__).resolve().parents[1]
+APP = ROOT / "app"
 sys.path.insert(0, str(ROOT / "src"))
 
 from btb.eval import runs  # noqa: E402
 
-st.set_page_config(page_title="Beat the Baseline", page_icon="📈", layout="wide")
+st.set_page_config(page_title="Beat the Baseline", page_icon="📈", layout="wide",
+                   initial_sidebar_state="collapsed")
+
+# Let the page fill the window; it scrolls inside its own frame.
+st.markdown(
+    """
+<style>
+header, footer, [data-testid="stToolbar"], [data-testid="stDecoration"] { display: none !important; }
+.block-container { padding: 0 !important; max-width: 100% !important; }
+iframe { height: 100vh !important; display: block; border: 0; }
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+_SUFFIX = re.compile(
+    r"(,?\s+(Inc\.?|Incorporated|Corporation|Corp\.?|Company|Co\.|plc|PLC|Ltd\.?|Limited|N\.V\.|S\.A\.|AG|SE"
+    r"|Holdings?|Group|Technologies|Systems))+$"
+)
+# Names that read badly after the general rule. Add more here if one looks off on screen.
+NAME_FIX = {"AIG": "AIG", "IBM": "IBM"}
 
 
-# ---------------- plumbing (done) ----------------
-def has_real() -> bool:
-    led = runs.read_ledger("real")
-    return not led.empty and (led["kind"] == "lockbox").any()
+def short_name(ticker: str, name: str) -> str:
+    if ticker in NAME_FIX:
+        return NAME_FIX[ticker]
+    name = re.sub(r"\s*\(.*?\)\s*$", "", str(name)).strip()
+    cut = _SUFFIX.sub("", name).strip(" ,")
+    return cut or name
 
 
 @st.cache_data
-def load_run(run_id: str, source: str):
-    """Returns (run.json dict, predictions DataFrame, metrics dict)."""
-    return runs.load_run(run_id, source)
+def build_data() -> tuple[dict, bool]:
+    """Everything the page needs, as one JSON-ready dict. Second value: real data or demo."""
+    led = runs.read_ledger("real")
+    real = not led.empty and (led["kind"] == "lockbox").any()
+    source = "real" if real else "fixture"
+
+    names = {}
+    if (APP / "companies.csv").exists():
+        df = pd.read_csv(APP / "companies.csv")
+        names = {str(t): short_name(str(t), n) for t, n in zip(df["ticker"], df["name"])}
+
+    # Live test: the newest frozen drop that has been scored.
+    drops = ROOT / "live" / "drops" if real else ROOT / "fixtures" / "demo_results" / "live"
+    live, found = [], []
+    for d in drops.glob("*"):
+        if (d / "forecasts.csv").exists() and (d / "scores.csv").exists():
+            freeze = d / "FREEZE.json"
+            frozen = json.loads(freeze.read_text()).get("frozen_utc", "") if freeze.exists() else ""
+            found.append((frozen, d.name, d))
+    if found:
+        d = max(found)[2]
+        sc = pd.read_csv(d / "scores.csv")[["ticker", "sector", "report_date", "y_true"]]
+        fc = pd.read_csv(d / "forecasts.csv").merge(sc, on="ticker")
+        for r in fc.itertuples():
+            live.append({"t": r.ticker, "n": names.get(r.ticker, r.ticker), "u": round(r.pred_baseline, 3),
+                         "m": round(r.pred_model, 3), "v21": round(r.vol_21d, 3), "v63": round(r.vol_63d, 3),
+                         "vix": round(r.vix, 2), "y": round(r.y_true, 3), "s": str(r.sector),
+                         "d": str(r.report_date)[:10], "r21": round(r.ret_21d, 3)})
+        live.sort(key=lambda c: c["n"].lower())
+
+    # Past reports: the locked test set, with the clues each report had beforehand.
+    past, met = [], {}
+    run_id = runs.latest_run("lockbox", source)
+    if run_id:
+        _, pred, m = runs.load_run(run_id, source)
+        o, b = m["overall"], m["bootstrap_week"]
+        met = {"n": o["n_events"], "mm": o["mae_model"], "mb": o["mae_baseline"], "pt": b["point"],
+               "lo": b["ci_low"], "hi": b["ci_high"], "wr": o["win_rate"]}
+        if (APP / "past_clues.csv").exists():
+            clues = pd.read_csv(APP / "past_clues.csv")
+            pr = pred.merge(clues, on="event_id").dropna(subset=["y_true", "pred_model", "pred_baseline"])
+            for r in pr.itertuples():
+                last8 = [round(float(x), 1) for x in str(r.last8).split()]
+                ratio = round(r.vol_21d / r.vol_63d, 3) if r.vol_63d else 1.0
+                past.append([r.ticker, str(pd.Timestamp(r.report_date).date()), round(r.y_true, 2),
+                             round(r.pred_model, 2), round(r.pred_baseline, 2), last8, ratio, round(r.vix, 1),
+                             str(r.sector), round(r.ret_21d, 3)])
+    return {"live": live, "past": past, "names": names, "met": met}, real
 
 
-def drops_dir(source: str) -> Path:
-    from btb.live.drops import drop_dir
+data, is_real = build_data()
+if not is_real:
+    st.warning("DEMO DATA: sample numbers to show the layout. Not a result.")
+if not data["live"] or not data["past"]:
+    st.info("Some results are missing (scores.csv, past_clues.csv or the lockbox run). The page shows what it can.")
 
-    return drop_dir("drop1", source).parent
-
-
-def pick_source() -> str:
-    if has_real():
-        return "real"
-    if runs.latest_run("lockbox", "synthetic") or runs.latest_run("dev", "synthetic"):
-        return "synthetic"
-    return "fixture"
-
-
-source = pick_source()
-ledger = runs.read_ledger(source)
-lock_id = runs.latest_run("lockbox", source)
-dev_id = runs.latest_run("dev", source)
-head_id = lock_id or dev_id
-
-st.title("Can ML beat the simple guess?")
-if source != "real":
-    st.warning("DEMO DATA: synthetic numbers to show the layout. Not a result.")
-if head_id is None:
-    st.info("No runs yet. Once the pipeline works, `make demo` builds the synthetic demo this app shows.")
-    st.stop()
-
-meta, pred_head, met_head = load_run(head_id, source)
-
-# Two tabs. Keep it simple: big numbers, few words. Detailed charts live in the report.
-tab_calls, tab_game = st.tabs(["This week's calls", "Beat the model"])
-
-with tab_calls:
-    # TODO (design A, "One stock, two guesses"):
-    #   - read forecasts.csv from the newest drop folder under drops_dir(source) that has one
-    #     (drop3 in the fake run)
-    #   - a selectbox of the companies in that file, sorted by ticker (default NVDA if it's there,
-    #     otherwise the first one)
-    #   - two big side-by-side numbers: "The simple guess ±X%" (pred_baseline, orange) and
-    #     "Our model ±Y%" (pred_model, blue), rounded to 1 decimal. Under the simple guess:
-    #     "How much it usually moves". Under the model: "Expects a bigger move than usual" if
-    #     pred_model > 1.1 x pred_baseline, "Expects a smaller move than usual" if < 0.9 x,
-    #     otherwise "Expects about the usual move"
-    #   - a dark bar at the bottom: "Actual move ±Z%" if that drop folder has a scores.csv with a
-    #     row for this ticker (y_true), otherwise "Shows up after they report. Come back and see
-    #     who was closer." The fake drop3 has no scores yet, so point it at drop2 once to test the
-    #     actual-move branch
-    st.info("TODO: one stock, two guesses")
-
-with tab_game:
-    # TODO (design C, "Beat the model"):
-    #   - pick a random past report from pred_head (the locked-test predictions)
-    #   - show "Can you beat our model?" and one sentence: company, report date
-    #   - the visitor sets a guess with st.number_input (0 to 30, step 0.5, in %), presses Reveal
-    #   - show four boxes: You (purple), Simple guess (orange), Our model (blue), Actual (gray),
-    #     then one line saying who was closest (smallest |guess - actual|)
-    #   - keep a running "visitors vs model" tally in st.session_state: visitor wins if strictly
-    #     closer than the model, model wins if strictly closer than the visitor, ties count for nobody
-    #   - a "Play again" button that picks a new report (store the current one in session_state so
-    #     it doesn't change on every rerun)
-    st.info("TODO: Beat the model game")
-
-st.caption(f"Run {head_id} · commit {meta['git_sha']} · config {meta['config_hash']} · data {meta['data_hash']}")
+page = (APP / "page.html").read_text(encoding="utf-8")
+components.html(page.replace("__DATA__", json.dumps(data, separators=(",", ":")), 1), height=900, scrolling=True)

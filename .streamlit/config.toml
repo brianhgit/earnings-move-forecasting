@@ -1,6 +1,15 @@
 [theme]
-primaryColor = "#2a78d6"
+base = "light"
+primaryColor = "#2B2620"
+backgroundColor = "#FBF7EF"
+secondaryBackgroundColor = "#F2EADB"
+textColor = "#2B2620"
+borderColor = "#E0D5C2"
+baseRadius = "10px"
 font = "sans serif"
 
 [server]
 headless = true
+
+[client]
+toolbarMode = "viewer"

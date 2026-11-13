@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>How far will a stock jump after earnings?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#FBF7EF;--card:#F2EADB;--text:#2B2620;--muted:#675C4D;--line:#E0D5C2;
+  --usual:#A2431A;--model:#1B5654;--you:#74398A;--tie:#7A6E5D;
+  --paper:#FFFDF8;
+  --hf:'Fraunces',Georgia,'Times New Roman',serif;
+  --bf:'IBM Plex Sans','Segoe UI',Helvetica,Arial,sans-serif;
+  --lift:0 1px 0 rgba(43,38,32,.05),0 18px 40px -26px rgba(43,38,32,.35);
+  --lift2:0 1px 0 rgba(43,38,32,.04),0 8px 20px -14px rgba(43,38,32,.28);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--bf);font-size:19px;line-height:1.5;overflow-x:hidden}
+h1,h2,h3,.num{font-family:var(--hf);font-weight:600;font-variation-settings:"opsz" 96}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--model);outline-offset:3px;border-radius:6px}
+.wrap{max-width:1160px;margin:0 auto;padding:0 32px}
+.tnum{font-variant-numeric:tabular-nums lining-nums}
+.u{color:var(--usual)}.m{color:var(--model)}.y{color:var(--you)}
+[hidden]{display:none!important}
+
+/* ---------- hero (compact band) ---------- */
+.hero{padding:24px 0 22px}
+.hero-grid{display:grid;grid-template-columns:minmax(0,1.12fr) minmax(0,.88fr);gap:40px;align-items:center}
+h1{font-size:clamp(32px,3.5vw,44px);line-height:1.06;letter-spacing:-.015em;margin:0 0 14px;max-width:20ch}
+.steps{list-style:none;margin:0;padding:0}
+.steps li{padding:2px 0;font-size:18px;line-height:1.4}
+.tl{margin:12px 0 0;font-size:16px;color:var(--muted)}
+.tl b{font-weight:600;color:var(--text)}
+.tl svg{width:20px;height:11px;color:var(--muted);vertical-align:middle;margin:0 6px}
+
+.result{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:18px 22px 16px}
+.result .kick{font-size:15px;color:var(--muted);margin:0 0 6px}
+.result h2{font-size:26px;line-height:1.2;margin:12px 0 2px}
+.mb{display:grid;grid-template-columns:118px 1fr 84px;align-items:center;gap:10px;font-size:16px;margin:2px 0}
+.mb .lab{font-weight:600}
+.mb .bar{height:12px;background:var(--line);border-radius:6px;overflow:hidden}
+.mb .bar i{display:block;height:100%;border-radius:6px;transform-origin:left center}
+.mb .v{font-family:var(--hf);font-weight:600;font-size:27px;text-align:right;line-height:1.1}
+.fact{margin:0;font-size:16px;color:var(--muted)}
+.fact b{color:var(--text);font-weight:600}
+
+/* ---------- tabs ---------- */
+.switch{padding:6px 0}
+.seg{position:relative;display:inline-grid;grid-template-columns:1fr 1fr;background:var(--card);border-radius:999px;padding:5px;box-shadow:inset 0 1px 2px rgba(43,38,32,.08)}
+.seg button{position:relative;z-index:1;border:0;background:none;min-height:48px;padding:0 26px;border-radius:999px;font-weight:600;font-size:18px;color:var(--muted);cursor:pointer;white-space:nowrap}
+.seg button[aria-selected=true]{color:var(--text)}
+.seg .ind{position:absolute;top:5px;bottom:5px;left:5px;width:calc(50% - 5px);background:var(--paper);border-radius:999px;box-shadow:var(--lift2)}
+.seg[data-on=past] .ind{transform:translateX(100%)}
+
+main{padding:24px 0 10px}
+.panel[hidden]{display:none}
+.panel-head{display:flex;justify-content:space-between;align-items:end;gap:16px 24px;flex-wrap:wrap;margin-bottom:18px}
+.panel-head h2{font-size:32px;line-height:1.1;margin:0}
+
+.layer{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:26px 28px}
+.cols{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:24px;align-items:start}
+.stack{display:flex;flex-direction:column;gap:20px;min-width:0}
+.side{border-top:1px solid var(--line);padding:18px 0 0}
+.side h3{font-size:22px;margin:0 0 8px}
+
+/* ---------- filter bar ---------- */
+.fbar{margin:0 0 22px}
+.frow{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:flex-end}
+.frow+.frow{border-top:1px solid var(--line);margin-top:12px;padding-top:12px}
+.fk{display:block;font-size:15px;color:var(--muted);margin-bottom:4px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.flinks{display:flex;gap:4px 14px;align-items:center;flex-wrap:wrap}
+#fday{width:170px}#fwho{width:190px}#fsec{width:250px}
+.ftog[aria-expanded=true]{background:var(--text);color:var(--bg);border-color:var(--text)}
+.chip{min-height:44px;padding:0 13px;border:1px solid var(--line);background:var(--paper);border-radius:999px;font-size:17px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.chip:hover{border-color:#C9BBA3}
+.chip[aria-pressed=true]{background:var(--text);color:var(--bg);border-color:var(--text)}
+.chip .ct{font-size:15px;color:var(--muted);font-variant-numeric:tabular-nums}
+.chip[aria-pressed=true] .ct{color:#D9CFBF}
+.chip .sw{width:10px;height:10px;border-radius:50%;flex:none}
+.chip[aria-pressed=true] .sw{box-shadow:0 0 0 2px var(--bg)}
+.selbox{position:relative;display:inline-block}
+.selbox select{appearance:none;-webkit-appearance:none;width:236px;min-height:48px;border:1px solid var(--line);background:var(--paper);border-radius:12px;padding:0 42px 0 14px;font-size:17px;cursor:pointer;max-width:100%}
+.selbox svg{position:absolute;right:14px;top:50%;width:14px;height:14px;margin-top:-7px;pointer-events:none;color:var(--muted)}
+.count{margin:0 6px 0 0;font-size:17px;color:var(--muted);white-space:nowrap;align-self:center}
+.count b{font-family:var(--hf);font-weight:600;font-size:22px;color:var(--text)}
+.qp{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.btn3{min-height:44px;padding:0 16px;border:1px solid var(--text);border-radius:12px;background:var(--paper);font-weight:600;font-size:17px;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.btn3:disabled{opacity:.45;cursor:default}
+.btn3 svg{width:16px;height:16px}
+.linkbtn{min-height:44px;padding:0 6px;border:0;background:none;font-weight:600;font-size:17px;color:var(--text);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+
+/* combobox */
+.combo{position:relative;max-width:560px;width:100%;flex:1 1 300px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.combo label b{color:var(--text);font-weight:600}
+.combo input{width:100%;min-height:48px;border:1px solid var(--line);background:var(--paper);border-radius:12px;padding:0 44px 0 16px;font-size:19px}
+.combo .chev{position:absolute;right:14px;bottom:17px;width:14px;height:14px;pointer-events:none;color:var(--muted)}
+.combo ul{position:absolute;left:0;right:0;top:100%;margin:6px 0 0;padding:6px;list-style:none;background:var(--paper);border:1px solid var(--line);border-radius:12px;box-shadow:var(--lift);max-height:320px;overflow:auto;z-index:30}
+.combo li{padding:10px 12px;border-radius:8px;cursor:pointer;display:flex;justify-content:space-between;gap:12px;min-height:44px;align-items:center}
+.combo li span{color:var(--muted);font-size:16px}
+.combo li[aria-selected=true],.combo li:hover{background:var(--card)}
+.combo .none{color:var(--muted);cursor:default}
+
+.co{display:flex;align-items:baseline;gap:6px 12px;flex-wrap:wrap;margin:0 0 14px}
+.co h3{font-size:32px;line-height:1.1;margin:0}
+.co .tk{color:var(--muted);font-size:16px}
+.co .meta{color:var(--muted);font-size:16px;flex-basis:100%}
+
+.pills{display:flex;flex-wrap:wrap;gap:10px 18px;margin:0 0 18px;align-items:flex-end}
+.pillset{display:flex;flex-direction:column;gap:5px}
+.pillset .k{font-size:15px;color:var(--muted);display:flex;align-items:center;gap:2px;min-height:22px}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:6px 14px 6px 12px;border-radius:999px;font-weight:600;font-size:17px;line-height:1.2;width:max-content}
+.pill::before{content:"";width:10px;height:10px;border-radius:50%;background:currentColor}
+.p-g{background:#e2f3e5;color:#1d6b34}
+.p-y{background:#fbefc4;color:#6e5100}
+.p-r{background:#fbe1de;color:#a3241a}
+.p-n{background:#ECE5D8;color:#4A4237}
+.pill.arw::before{display:none}
+.pill.arw svg{width:12px;height:12px;flex:none}
+.info{position:relative;width:44px;height:44px;margin:-11px -12px -11px -8px;border:0;background:none;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.info span{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--muted);color:var(--muted);font-family:var(--hf);font-weight:600;font-size:15px;line-height:19px;text-align:center;font-style:italic}
+.info[aria-expanded=true] span{background:var(--text);border-color:var(--text);color:var(--bg)}
+.infotx{flex-basis:100%;margin:0;font-size:16px;color:var(--text);background:var(--card);border-radius:10px;padding:8px 12px;max-width:52ch}
+
+/* real move headline */
+.real{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-top:4px}
+.real .k{font-size:18px;color:var(--muted)}
+.real .num{font-size:60px;line-height:1}
+
+/* scale chart */
+.scale{display:grid;grid-template-columns:150px minmax(0,1fr) 104px;column-gap:16px;margin:16px 0 4px;position:relative}
+.sc-top{grid-column:2;grid-row:1;height:24px;position:relative}
+.sc-lab{position:absolute;top:0;transform:translateX(-50%);font-size:15px;font-weight:600;line-height:20px;color:var(--text);background:var(--paper);padding:0 6px;border-radius:6px}
+.sc-lab.l{transform:translateX(-4px)}.sc-lab.r{transform:translateX(calc(-100% + 4px))}
+.sc-over{grid-column:2;grid-row:1 / -1;position:relative;pointer-events:none;z-index:2}
+.sc-line{position:absolute;top:22px;bottom:26px;width:0;border-left:3px solid var(--text);transform:translateX(-1.5px)}
+.lane{display:contents}
+.lane .who{grid-column:1;padding:10px 0;line-height:1.2;position:relative;z-index:1}
+.lane .who b{display:block;font-weight:600;font-size:17px}
+.lane .who .val{font-family:var(--hf);font-weight:600;font-size:24px;margin-top:2px;display:block;width:max-content;transform-origin:left center}
+.lane .who .tag{display:inline-block;margin-top:4px;font-size:15px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:0 8px;line-height:1.4}
+.lane .trk{grid-column:2;position:relative;min-height:64px;z-index:1}
+.lane .trk::before{content:"";position:absolute;left:0;right:0;top:50%;height:2px;background:var(--line);transform:translateY(-1px)}
+.gap{position:absolute;top:50%;height:14px;transform:translateY(-50%);border-radius:7px;opacity:.55}
+.dot{position:absolute;top:50%;width:18px;height:18px;border-radius:50%;transform:translate(-50%,-50%);border:3px solid var(--paper);box-shadow:0 1px 3px rgba(43,38,32,.35)}
+.lane .off{grid-column:3;padding:10px 0;display:flex;flex-direction:column;justify-content:center;font-size:16px;color:var(--muted);line-height:1.2;position:relative;z-index:1}
+.band{grid-column:1 / -1;margin:3px -12px;border-radius:12px;background:var(--card);opacity:0;z-index:0;pointer-events:none}
+.band.on{opacity:1}
+.lane .off b{font-family:var(--hf);font-weight:600;font-size:24px;color:var(--text)}
+.badge{display:block;width:max-content;margin-top:4px;font-size:15px;font-weight:600;color:var(--text);background:var(--card);padding:1px 9px;border-radius:999px}
+.sc-axis{grid-column:2;position:relative;height:26px;border-top:1px solid var(--line);font-size:15px;color:var(--muted)}
+.sc-axis span{position:absolute;top:3px;transform:translateX(-50%)}
+.sc-axis span.l{transform:none}
+.sc-axis span.r{transform:translateX(-100%)}
+.verdict{margin:14px 0 0;font-family:var(--hf);font-weight:600;font-size:26px;line-height:1.25}
+.verdict u{text-decoration:none;color:var(--c);padding-bottom:1px;background:linear-gradient(var(--c),var(--c)) 0 100%/100% 2px no-repeat;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+@media (forced-colors:active){.verdict u{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:4px}}
+
+.empty{text-align:center;padding:30px 10px}
+.empty h3{font-size:28px;margin:0 0 6px}
+.empty p{color:var(--muted);margin:0 0 18px}
+
+/* glance chart */
+.glance{padding:8px 0 0}
+.glance h3{font-size:22px;margin:0 0 4px}
+.gwrap{position:relative;touch-action:manipulation}
+.gwrap svg{display:block;overflow:visible}
+.gwrap text{font-family:var(--bf);font-size:15px;fill:var(--muted)}
+.gwrap .rl{font-weight:600;font-size:15px}
+.gwrap .grid{stroke:var(--line);stroke-width:1}
+.gwrap .diag{stroke:#B3A68F;stroke-width:1.5;stroke-dasharray:5 4}
+.gd{r:0px;opacity:0;stroke:var(--paper);stroke-width:1.5}
+.gwrap .zero{stroke:var(--text);stroke-width:1.5}
+.gd.on{r:5px;opacity:.92}
+.gd.on.cm{fill:var(--model)}.gd.on.cu{fill:var(--usual)}.gd.on.ct{fill:var(--tie)}
+.gd.hov{r:7.5px;opacity:1}
+.selm{pointer-events:none}
+.selm circle{fill:none;stroke:var(--text);stroke-width:2.5}
+.selm text{font-weight:600;fill:var(--text);paint-order:stroke;stroke:var(--paper);stroke-width:4px;stroke-linejoin:round}
+.gtip{position:absolute;z-index:5;background:var(--text);color:var(--bg);border-radius:10px;padding:8px 12px;font-size:15px;line-height:1.35;pointer-events:none;box-shadow:var(--lift);max-width:240px}
+.gtip.touch{pointer-events:auto}
+.gtip b{font-weight:600;font-size:16px}
+.gtip .tm{color:#9FD1CB}.gtip .tu{color:#F0B08F}
+.gtip button{display:block;margin-top:6px;min-height:44px;width:100%;border:0;border-radius:8px;background:var(--bg);color:var(--text);font-weight:600;font-size:16px;cursor:pointer}
+.gcap{font-size:15px;color:var(--muted);margin:6px 0 0}
+.gcap b{font-weight:600}
+
+/* week */
+#week{margin-top:36px;display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1fr) minmax(0,1.3fr);gap:8px 32px;align-items:start}
+#week .note{grid-column:1 / -1;margin:4px 0 0}
+#week .sp{margin-top:0}
+#week .big{font-size:32px}
+.wk .kick{display:block;font-family:var(--bf);font-weight:400;font-size:15px;color:var(--muted);margin-top:6px}
+.wk .big{font-size:40px;line-height:1.05;margin:0 0 10px}
+.pair{display:grid;grid-template-columns:1fr 1fr}
+.pair div{padding:0}
+.pair div+div{padding-left:18px;border-left:1px solid var(--line)}
+.pair .num{font-size:36px;line-height:1;display:block}
+.pair .lab{font-size:16px;font-weight:600}
+.cap{font-size:15px;color:var(--muted);margin:6px 0 0}
+.wk .sp{margin-top:16px}
+.split{display:flex;height:18px;border-radius:9px;overflow:hidden;margin:6px 0 6px;background:var(--line)}
+.split i{display:block;height:100%}
+.splitlab{display:flex;justify-content:space-between;font-size:15px;gap:8px}
+.splitlab b{font-weight:600}
+.wk .note{font-size:15px;color:var(--muted);margin:14px 0 0}
+
+/* game */
+.ask h3{font-size:30px;line-height:1.15;margin:0}
+.l8{margin:0 0 14px}
+.l8 .k{font-size:15px;color:var(--muted);margin-bottom:4px}
+.guessrow{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;padding-top:18px}
+.guessrow label{flex-basis:100%;font-size:16px;color:var(--muted);margin-bottom:-6px}
+.inbox{position:relative;width:max-content}
+.inbox input{width:190px;min-height:56px;border:2px solid var(--line);background:var(--paper);border-radius:12px;padding:0 40px 0 16px;font-family:var(--hf);font-weight:600;font-size:26px}
+.inbox input:focus{border-color:var(--you);outline:none;box-shadow:0 0 0 3px rgba(116,57,138,.18)}
+.inbox::after{content:"%";position:absolute;right:16px;bottom:13px;font-family:var(--hf);font-weight:600;font-size:22px;color:var(--muted)}
+.btn{min-height:56px;padding:0 28px;border:0;border-radius:12px;background:var(--text);color:var(--bg);font-weight:600;font-size:19px;cursor:pointer;box-shadow:var(--lift2)}
+.btn:active{transform:translateY(1px)}
+.btn2{min-height:52px;padding:0 24px;border:1px solid var(--text);border-radius:12px;background:transparent;font-weight:600;font-size:18px;cursor:pointer}
+.cluehint{margin:0 0 10px;font-size:17px;color:var(--muted)}
+.hint{min-height:0;margin:6px 0 0;font-size:17px;color:#7a3f12}
+.tally{font-size:18px}
+.tally .num{font-size:52px;line-height:1;display:block;margin:4px 0}
+.tally .k{color:var(--muted);font-size:16px;display:flex;align-items:center;gap:2px}
+.tally .infotx{margin-top:8px;background:var(--paper)}
+.again{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-top:18px}
+.gsec label{display:block;font-size:15px;color:var(--muted);margin-bottom:4px}
+.gcard{position:relative;padding-top:20px}
+.gcard .gsec{position:absolute;top:22px;right:24px}
+.gcard .gsec select{width:220px}
+.gcard .ask .co{padding-right:250px;min-height:48px;align-content:center}
+.scorecard{position:sticky;top:16px}
+.l8head{display:flex;justify-content:space-between;align-items:center;gap:8px 16px;flex-wrap:wrap;font-size:15px;color:var(--muted);margin-bottom:2px}
+.ulg{color:var(--usual);font-weight:600;display:inline-flex;align-items:center;gap:8px}
+.ulg::before{content:"";width:24px;border-top:2.5px dashed var(--usual)}
+
+details{margin-top:26px;border:1px solid var(--line);border-radius:14px;background:var(--paper)}
+summary{cursor:pointer;padding:14px 20px;font-weight:600;min-height:48px;list-style-position:inside}
+details .body{padding:0 20px 14px;max-width:72ch}
+details .body p{margin:0 0 12px;font-size:18px}
+.fine{font-size:15px;color:var(--muted);padding:22px 0 30px;margin:0}
+
+.l8c{position:relative}
+.plot{position:relative;height:120px;margin:28px 0 6px;display:grid;grid-template-columns:repeat(8,1fr);gap:10px;border-bottom:2px solid var(--line)}
+.plot .c{position:relative;height:100%}
+.plot .b{position:absolute;left:14%;right:14%;bottom:0;background:#C8B79C;border-radius:4px 4px 0 0}
+.plot .bv{position:absolute;left:-6px;right:-6px;text-align:center;font-size:16px;font-weight:600;line-height:20px;height:20px;z-index:4}
+.plot .bv em{font-style:normal}
+.plot .bt{position:absolute;font-size:15px;line-height:18px;height:18px;color:var(--muted);white-space:nowrap;z-index:4;left:50%;transform:translateX(-50%)}
+.plot .bt.al{left:0;transform:none}.plot .bt.ar{left:auto;right:0;transform:none}
+.uline{position:absolute;left:0;right:0;border-top:2.5px dashed var(--usual);z-index:2}
+.ends{display:flex;justify-content:space-between;font-size:15px;color:var(--muted);margin-top:2px}
+@media (max-width:600px){
+  .plot{gap:5px}
+  .plot .bv{font-size:15px;left:-4px;right:-4px}
+}
+
+/* motion: only transform and opacity animate; JS (WAAPI) handles choreography, see MO */
+@media (prefers-reduced-motion:no-preference){
+  .seg .ind{transition:transform .25s cubic-bezier(.3,.7,.2,1)}
+  .panel.enter{animation:pin .22s cubic-bezier(.3,.7,.2,1)}
+  @keyframes pin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .verdict u{background-size:0 2px;transition:background-size .42s cubic-bezier(.3,.7,.2,1)}
+  .verdict.in u{background-size:100% 2px}
+  .stage{opacity:0;transform:translateY(var(--rise,8px));transition:opacity var(--sd,.35s) ease,transform var(--sd,.35s) cubic-bezier(.3,.7,.2,1)}
+  .stage.in{opacity:1;transform:none}
+  .lane.dim .stage.in{opacity:.42}
+  .band{transition:opacity .35s ease}
+  .plot .b{transform-origin:bottom;animation:grow .6s cubic-bezier(.3,.7,.2,1) both}
+  @keyframes grow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+  .l8 .lbl{animation:fade .4s ease both}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .gd{transform-box:fill-box;transform-origin:center;transition:r .3s cubic-bezier(.3,.7,.2,1),opacity .3s ease,fill .3s ease,cx .45s cubic-bezier(.3,.7,.2,1),cy .45s cubic-bezier(.3,.7,.2,1)}
+  .gd.pop{animation:pop .4s cubic-bezier(.3,.7,.2,1) both}
+  @keyframes pop{from{opacity:0;transform:scale(.3)}}
+  .selm{transition:transform .45s cubic-bezier(.3,.75,.2,1)}
+  .chip,.btn3{transition:background-color .2s ease,color .2s ease,border-color .2s ease}
+}
+@media (prefers-reduced-motion:reduce){.stage{opacity:1}.lane.dim .stage{opacity:1}}
+
+/* responsive */
+@media (max-width:980px){
+  .hero-grid{grid-template-columns:1fr;gap:24px}
+  .cols{grid-template-columns:1fr}
+  #week{grid-template-columns:1fr}
+}
+@media (max-width:600px){
+  .hero-grid{display:flex;flex-direction:column;gap:0;align-items:stretch}
+  .hero-grid>.story{display:contents}
+  h1{order:2}.result{order:3;margin:4px 0 22px}.steps{order:4}.tl{order:5}
+  .wrap{padding:0 16px}
+  .hero{padding:20px 0 20px}
+  h1{font-size:33px}
+  .result{padding:14px 16px 12px}
+  .result h2{font-size:21px}
+  .mb{grid-template-columns:106px 1fr 72px;font-size:15px}
+  .mb .v{font-size:23px}
+  .seg{display:grid;width:100%}
+  .seg button{padding:0 8px;font-size:16px}
+  .panel-head h2{font-size:26px}
+  .frow{gap:12px}
+  .fgrp,.fgrp .selbox,.fgrp select{width:100%}
+  .chip{padding:0 12px}
+  .fbar .fgrp,.fbar .fgrp .selbox,.fbar select{width:100%!important}
+  .qp{width:100%}.qp .btn3{flex:1;justify-content:center}
+  .lane .who .tag{border:0;padding:0;line-height:1.25}
+  .splitlab{flex-wrap:wrap}
+  .layer{padding:20px 16px;border-radius:16px}
+  .glance{padding:8px 0 0}
+  .co h3{font-size:27px}
+  .real .num{font-size:48px}
+  .scale{grid-template-columns:86px minmax(0,1fr) 74px;column-gap:10px}
+  .lane .who b{font-size:15px}
+  .lane .who .val,.lane .off b{font-size:20px}
+  .lane .off{font-size:15px}
+  .gap{height:10px;border-radius:5px}
+  .verdict{font-size:22px}
+  .ask h3{font-size:25px}
+  .inbox input{width:150px}
+  .btn{flex:1}
+  .gcard .gsec{position:static;margin-bottom:12px}
+  .gcard .ask .co{padding-right:0;min-height:0}
+  .gsec,.gsec .selbox,.gcard .gsec select{width:100%}
+  .scorecard{position:static}
+}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap hero-grid">
+    <div class="story">
+      <h1>How far will a stock jump after earnings?</h1>
+      <ul class="steps">
+        <li>Earnings news makes stocks jump, up or down.</li>
+        <li>Simple guess: <b class="u">its usual jump</b>, the middle of its last 8.</li>
+        <li><b class="m">Our model</b>, a machine learning model, tries to beat it.</li>
+      </ul>
+      <p class="tl"><b>Nov 1</b> 480 guesses locked <svg viewBox="0 0 22 12" aria-hidden="true"><path d="M1 6h18M14 1l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2"/></svg> <b>Nov 2 to 6</b> 138 reported</p>
+    </div>
+    <aside class="result" aria-label="The result">
+      <p class="kick">Average miss on <span class="tnum" data-count="3382" data-dec="0">3,382</span> past reports</p>
+      <div class="mb"><span class="lab m">Our model</span><span class="bar" aria-hidden="true"><i class="m-fill" style="background:var(--model)"></i></span><span class="v m tnum" data-count="3.44" data-dec="2" data-suf="%">3.44%</span></div>
+      <div class="mb"><span class="lab u">Its usual jump</span><span class="bar" aria-hidden="true"><i class="u-fill" style="background:var(--usual)"></i></span><span class="v u tnum" data-count="3.50" data-dec="2" data-suf="%">3.50%</span></div>
+      <h2><span class="tnum"><span data-count="1.7" data-dec="1">1.7</span>%</span> smaller misses.</h2>
+      <p class="fact">Short of our 3% goal. Live week: <b id="live1">even on average</b>.</p>
+    </aside>
+  </div>
+</header>
+
+<nav class="switch" aria-label="Sections">
+  <div class="wrap">
+    <div class="seg" role="tablist" data-on="live">
+      <span class="ind" aria-hidden="true"></span>
+      <button role="tab" id="tab-live" aria-controls="p-live" aria-selected="true" data-t="live">Our live test</button>
+      <button role="tab" id="tab-past" aria-controls="p-past" aria-selected="false" data-t="past" tabindex="-1">Try a past report</button>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <section class="panel" id="p-live" role="tabpanel" aria-labelledby="tab-live">
+    <div class="fbar" id="fbar" role="group" aria-label="Find a company">
+      <div class="frow">
+        <div class="combo" id="combo">
+          <label for="q" id="qlab" class="sr">Pick a company</label>
+          <input id="q" type="text" role="combobox" aria-expanded="false" aria-controls="lb" aria-autocomplete="list" autocomplete="off" spellcheck="false">
+          <svg class="chev" viewBox="0 0 14 14" aria-hidden="true"><path d="M2 5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+          <ul id="lb" role="listbox" tabindex="-1" hidden></ul>
+        </div>
+        <div class="qp">
+          <button class="btn3" type="button" id="surprise"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="1.5" width="13" height="13" rx="3" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="5.2" cy="5.2" r="1.3" fill="currentColor"/><circle cx="10.8" cy="10.8" r="1.3" fill="currentColor"/><circle cx="8" cy="8" r="1.3" fill="currentColor"/></svg>Surprise me</button>
+          <button class="btn3 ftog" type="button" id="ftog" aria-expanded="false" aria-controls="fr1"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4h12M4.5 8h7M7 12h2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span id="ftogt">Filters</span></button>
+        </div>
+      </div>
+      <div class="frow fmore" id="fr1" hidden>
+        <div class="fgrp"><label class="fk" for="fday">Day</label><span class="selbox"><select id="fday"></select><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M2 5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2"/></svg></span></div>
+        <div class="fgrp"><label class="fk" for="fwho">Who was closer</label><span class="selbox"><select id="fwho"></select><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M2 5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2"/></svg></span></div>
+        <div class="fgrp"><label class="fk" for="fsec">Sector</label><span class="selbox"><select id="fsec"></select><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M2 5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2"/></svg></span></div>
+        <div class="flinks"><button class="linkbtn" type="button" id="biggest">Biggest jump</button><button class="linkbtn" type="button" id="fclear" hidden>Clear</button></div>
+      </div>
+    </div>
+    <div class="cols">
+      <article class="layer" id="liveout" aria-live="polite"></article>
+      <section class="glance" aria-labelledby="gh">
+        <h3 id="gh">Who was closer, company by company</h3>
+        <div class="gwrap" id="gwrap"></div>
+        <p class="gcap" id="gcap"></p>
+      </section>
+    </div>
+  </section>
+
+  <section class="panel" id="p-past" role="tabpanel" aria-labelledby="tab-past" hidden>
+    <div class="panel-head">
+      <h2>Can you beat our model?</h2>
+    </div>
+    <div class="cols">
+      <article class="layer gcard">
+        <div class="gsec">
+          <label for="gsec" class="sr">Pick a sector</label>
+          <span class="selbox"><select id="gsec"></select><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M2 5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2"/></svg></span>
+        </div>
+        <div id="game"></div>
+      </article>
+      <aside class="side scorecard">
+        <div class="tally" id="tally" aria-live="polite"></div>
+      </aside>
+    </div>
+  </section>
+
+  <details>
+    <summary>How it works</summary>
+    <div class="body" id="how"></div>
+  </details>
+
+  <p class="fine">Move = how much the stock moved over 2 days, minus the market's move. Size only. Student project, not investment advice.</p>
+</main>
+
+<script>
+const D = __DATA__;
+(function(){
+"use strict";
+const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const T = x => Math.round(x * 10);              // tenths, for on-screen math
+const f1 = x => (Math.round(x * 10) / 10).toFixed(1);
+const pct = x => f1(x) + '%';
+const COL = {you:'var(--you)', model:'var(--model)', usual:'var(--usual)'};
+const NAME = {you:'You', model:'Our model', usual:'Its usual jump'};
+const wait = ms => new Promise(r => setTimeout(r, RM ? 0 : ms));
+const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const WD = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const day = s => { const [y,m,d] = s.split('-'); return `${MON[+m-1]} ${+d}, ${y}`; };
+const wday = s => WD[new Date(s + 'T12:00:00Z').getUTCDay()];
+const shortDay = s => { const [,m,d] = s.split('-'); return `${wday(s)} ${MON[+m-1]} ${+d}`; };
+
+/* ---------- motion engine ---------- */
+const MO = /*MO*/{"hero":{"steps":[[0,700],[300,850],[550,850],[1250,600]],"rise":8},"liveFirst":1400,"glanceDelay":3600,"live":{"realMs":700,"realEase":"out3","afterReal":50,"frame":"drop","frameMs":200,"stagger":500,"move":480,"settle":80,"toVerdict":280,"sd":340,"rise":6,"countOff":true,"countVal":false,"dim":false,"pop":true,"band":true},"game":{"realMs":1000,"realEase":"out3","afterReal":100,"frame":"drop","frameMs":250,"stagger":750,"move":550,"settle":100,"toVerdict":350,"toButton":350,"sd":380,"rise":6,"countOff":true,"countVal":false,"dim":false,"pop":true,"band":true}}/*MO*/;
+const EASE = {out3:p => 1 - Math.pow(1 - p, 3), out4:p => 1 - Math.pow(1 - p, 4), out5:p => 1 - Math.pow(1 - p, 5)};
+const EZ = 'cubic-bezier(.25,.8,.25,1)';
+const RAF = new WeakMap();
+/* count a number up; cancels any earlier count on the same element; stops quietly if the element leaves the page */
+function countUp(el, to, dec, ms, suffix, ease){
+  suffix = suffix || '';
+  const fmt = v => dec === 0 ? Math.round(v).toLocaleString('en-US') : v.toFixed(dec);
+  if (RAF.has(el)) { cancelAnimationFrame(RAF.get(el)); RAF.delete(el); }
+  if (RM || !ms) { el.textContent = fmt(to) + suffix; return; }
+  const E = EASE[ease] || EASE.out3, t0 = performance.now();
+  el.textContent = fmt(0) + suffix;
+  const step = now => {
+    if (!el.isConnected) { RAF.delete(el); return; }
+    const p = Math.max(0, Math.min(1, (now - t0) / ms));
+    el.textContent = fmt(p < 1 ? to * E(p) : to) + suffix;
+    if (p < 1) RAF.set(el, requestAnimationFrame(step)); else RAF.delete(el);
+  };
+  RAF.set(el, requestAnimationFrame(step));
+}
+/* WAAPI helper: final state lives in CSS/inline style, the animation only supplies the "from" */
+function anim(el, kf, o){
+  if (RM || !el || !el.animate) return null;
+  return el.animate(kf, Object.assign({fill:'backwards', easing:EZ}, o));
+}
+const later = (ms, fn) => RM ? fn() : setTimeout(fn, ms);
+
+/* hero: a short sequence so one thing moves at a time */
+(function hero(){
+  const H = MO.hero;
+  const kick = $('.result .kick [data-count]');
+  const rows = [...document.querySelectorAll('.result .mb')];
+  const h2 = $('.result h2'), fact = $('.result .fact');
+  // reserve the final width so the sentence doesn't slide while 3,382 counts
+  kick.style.display = 'inline-block'; kick.style.textAlign = 'right'; kick.style.minWidth = kick.offsetWidth + 'px';
+  $('.m-fill').style.width = (D.met.mm / 3.6 * 100) + '%';
+  $('.u-fill').style.width = (D.met.mb / 3.6 * 100) + '%';
+  const step = (i, fn) => { const [d, ms] = H.steps[i]; fn(d, ms); };
+  step(0, (d, ms) => later(d, () => countUp(kick, 3382, 0, ms)));
+  rows.forEach((r, k) => step(k + 1, (d, ms) => {
+    const v = r.querySelector('.v'), bar = r.querySelector('.bar i');
+    anim(v, [{opacity:0}, {opacity:1}], {duration:220, delay:d});
+    anim(bar, [{transform:'scaleX(0)'}, {transform:'scaleX(1)'}], {duration:ms, delay:d});
+    if (!RM) v.textContent = (0).toFixed(2) + '%';
+    later(d, () => countUp(v, +v.dataset.count, 2, ms, '%'));
+  }));
+  step(3, (d, ms) => {
+    const n = h2.querySelector('[data-count]');
+    anim(h2, [{opacity:0, transform:`translateY(${H.rise}px)`}, {opacity:1, transform:'none'}], {duration:400, delay:d});
+    anim(fact, [{opacity:0}, {opacity:1}], {duration:400, delay:d + 150});
+    later(d, () => countUp(n, 1.7, 1, ms));
+  });
+})();
+
+/* ---------- info toggles (tap or click, no hover) ---------- */
+let infoN = 0;
+function infoBtn(label, text){
+  const id = 'inf' + (++infoN);
+  return {btn:`<button class="info" type="button" aria-expanded="false" aria-controls="${id}" aria-label="${esc(label)}"><span aria-hidden="true">i</span></button>`,
+          box:`<p class="infotx" id="${id}" hidden>${text}</p>`};
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('.info'); if (!b) return;
+  const box = document.getElementById(b.getAttribute('aria-controls')); if (!box) return;
+  const open = b.getAttribute('aria-expanded') !== 'true';
+  b.setAttribute('aria-expanded', open); box.hidden = !open;
+  if (open) anim(box, [{opacity:0, transform:'translateY(-4px)'}, {opacity:1, transform:'none'}], {duration:180});
+});
+
+/* ---------- pills ---------- */
+const MOVE_INFO = 'How much the stock moved day to day this past month, compared with the 3 months before.';
+function moodPill(vix){
+  const [c, w] = vix < 20 ? ['p-g','Calm'] : vix <= 30 ? ['p-y','A little nervous'] : ['p-r','Nervous'];
+  return `<div class="pillset"><span class="k">Market mood</span><span class="pill ${c}">${w}</span></div>`;
+}
+const MONTH_INFO = 'How much the stock price rose or fell over the month before the report.';
+function monthPill(x){
+  const a = Math.abs(x), up = x > 0;
+  const w = a < 0.5 ? 'Flat' : `${up ? 'Up' : 'Down'} ${f1(a)}%`;
+  const arrow = a < 0.5 ? '' : `<svg viewBox="0 0 12 12" aria-hidden="true"><path d="${up ? 'M6 10V2M2.5 5.5L6 2l3.5 3.5' : 'M6 2v8M2.5 6.5L6 10l3.5-3.5'}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  const ib = infoBtn('What does Past month mean?', MONTH_INFO);
+  return {html:`<div class="pillset"><span class="k">Past month ${ib.btn}</span><span class="pill p-n${arrow ? ' arw' : ''}">${arrow}${esc(w)}</span></div>`, box:ib.box};
+}
+function pillsHTML(vix, r, noMood, month){
+  const [c, w] = r < .85 ? ['p-g','Less than usual'] : r <= 1.15 ? ['p-n','About usual'] : ['p-r','More than usual'];
+  const ib = infoBtn('What does Moving lately mean?', MOVE_INFO);
+  const mp = month == null ? null : monthPill(month);
+  return `<div class="pills">${noMood ? '' : moodPill(vix)}<div class="pillset"><span class="k">Moving lately ${ib.btn}</span><span class="pill ${c}">${w}</span></div>${mp ? mp.html : ''}${ib.box}${mp ? mp.box : ''}</div>`;
+}
+
+/* ---------- scale chart ---------- */
+/* zoomed linear axis: nice round ends around the values, 3 to 4 ticks, min span ~2 points */
+function zoomRange(vals){
+  let lo = Math.min(...vals), hi = Math.max(...vals);
+  if (hi - lo < 2){ const c = (lo + hi) / 2; lo = c - 1; hi = c + 1; }
+  const pad = (hi - lo) * 0.15;
+  lo = Math.max(0, lo - pad); hi = hi + pad;
+  const maxT = innerWidth < 600 ? 3 : 4;
+  for (const st of [0.5, 1, 2, 5, 10, 20, 50, 100, 200]){
+    const h = st / 2, a = Math.max(0, Math.floor(lo / h) * h), b = Math.ceil(hi / h) * h;
+    const tv = []; for (let v = Math.ceil(a / st - 1e-9) * st; v <= b + 1e-9; v += st) tv.push(+v.toFixed(2));
+    if (tv.length <= maxT) return {min:a, max:b, tv};
+  }
+  return {min:0, max:Math.ceil(hi), tv:[0, Math.ceil(hi)]};
+}
+function closest(real, rows){
+  const offs = rows.map(r => Math.abs(T(r.val) - T(real)));
+  const lo = Math.min(...offs);
+  return {offs, best: rows.filter((r, i) => offs[i] === lo).map(r => r.key)};
+}
+const VCOL = {you:'var(--you)', model:'var(--model)', usual:'var(--usual)'};
+function verdictText(best){
+  // each winner's name underlined in its own color; ties underline every tied name, drawn left to right
+  const u = (k, i, lower) => { const t = lower ? NAME[k].toLowerCase() : NAME[k];
+    return `<u style="--c:${VCOL[k]};transition-delay:${(0.12 + i * 0.22).toFixed(2)}s">${esc(t)}</u>`; };
+  if (best.length === 1) return best[0] === 'you' ? `${u('you', 0)} were closest.` : `${u(best[0], 0)} was closest.`;
+  if (best.length === 2) return `A tie: ${u(best[0], 0, true)} and ${u(best[1], 1, true)} were equally close.`;
+  return `A three-way tie: ${u(best[0], 0, true)}, ${u(best[1], 1, true)} and ${u(best[2], 2, true)} were equally close.`;
+}
+function scaleHTML(real, rows){
+  const {min, max, tv} = zoomRange([real, ...rows.map(r => r.val)].map(v => +f1(v)));
+  const P = v => Math.min(100, Math.max(0, (v - min) / (max - min) * 100));
+  const {offs, best} = closest(real, rows);
+  const rp = P(+f1(real));
+  const ticks = tv.map(v => { const x = P(v); return `<span class="${x < 4 ? 'l' : x > 96 ? 'r' : ''}" style="left:${x}%">${+v.toFixed(1)}%</span>`; }).join('');
+  const labCls = rp < 6 ? ' l' : rp > 94 ? ' r' : '';
+  const lanes = rows.map((r, i) => {
+    const p = P(+f1(r.val));
+    const lo = Math.min(p, rp), w = Math.abs(p - rp);
+    const gr = `grid-row:${i+2}`;
+    const isBest = best.includes(r.key);
+    return `${isBest ? `<span class="band" style="${gr}" aria-hidden="true"></span>` : ''}<div class="lane${isBest ? ' best' : ''}" data-i="${i}">
+      <div class="who stage" style="${gr}"><b style="color:${COL[r.key]}">${NAME[r.key]}</b><span class="val tnum" style="color:${COL[r.key]}" data-v="${f1(r.val)}">${pct(r.val)}</span>${r.tag ? `<span class="tag">${r.tag}</span>` : ''}</div>
+      <div class="trk stage" style="${gr}" aria-hidden="true">
+        <span class="gap" style="background:${COL[r.key]};left:${lo}%;width:${w}%;transform-origin:${p >= rp ? 'left' : 'right'} center"></span>
+        <span class="dot" style="background:${COL[r.key]};left:${p}%" data-p="${p}" data-rp="${rp}"></span>
+      </div>
+      <div class="off stage" style="${gr}">off by<b class="tnum" data-v="${(offs[i]/10).toFixed(1)}">${(offs[i]/10).toFixed(1)}%</b></div>
+    </div>`;
+  }).join('');
+  return `<div class="scale" style="grid-template-rows:24px repeat(${rows.length},auto) 26px" role="img" aria-label="Real jump ${pct(real)}. ${rows.map((r,i)=>`${NAME[r.key]} ${pct(r.val)}, off by ${(offs[i]/10).toFixed(1)}%`).join('. ')}.">
+    <div class="sc-top"></div>
+    <div class="sc-over frame"><span class="sc-lab${labCls}" style="left:${rp}%">real</span><span class="sc-line" style="left:${rp}%"></span></div>
+    ${lanes}
+    <div class="sc-axis frame" style="grid-row:${rows.length+2}">${ticks}</div>
+  </div>
+  <p class="verdict stage">${verdictText(best)}</p>`;
+}
+function showFrame(root, o){
+  const fr = [...root.querySelectorAll('.frame')];
+  if (o.frame === 'drop'){
+    anim(root.querySelector('.sc-line'), [{transform:'translateX(-1.5px) scaleY(0)'}, {transform:'translateX(-1.5px) scaleY(1)'}], {duration:320});
+    root.querySelector('.sc-line').style.transformOrigin = 'top';
+    anim(root.querySelector('.sc-lab'), [{opacity:0}, {opacity:1}], {duration:250});
+    anim(root.querySelector('.sc-axis'), [{opacity:0}, {opacity:1}], {duration:300});
+  } else if (o.frame === 'fade') fr.forEach(f => anim(f, [{opacity:0}, {opacity:1}], {duration:220}));
+}
+function enterLane(ln, o){
+  ln.querySelectorAll('.stage').forEach(s => s.classList.add('in'));
+  const trk = ln.querySelector('.trk'), dot = ln.querySelector('.dot'), g = ln.querySelector('.gap');
+  const W = trk.clientWidth;
+  if (W){
+    const dx = (+dot.dataset.rp - +dot.dataset.p) / 100 * W;
+    anim(dot, [{transform:`translate(calc(-50% + ${dx.toFixed(1)}px),-50%)`}, {transform:'translate(-50%,-50%)'}], {duration:o.move});
+    anim(g, [{transform:'translateY(-50%) scaleX(0)'}, {transform:'translateY(-50%) scaleX(1)'}], {duration:o.move});
+  }
+  if (o.countOff){ const b = ln.querySelector('.off b'); countUp(b, +b.dataset.v, 1, o.move, '%', 'out3'); }
+  if (o.countVal){ const v = ln.querySelector('.val'); countUp(v, +v.dataset.v, 1, o.move, '%', 'out3'); }
+}
+/* rows one by one, then a brief nod to the closest row, then the verdict. alive() says whether this run still owns the DOM. */
+async function playScale(root, o, alive){
+  const lanes = [...root.querySelectorAll('.lane')];
+  root.style.setProperty('--rise', o.rise + 'px');
+  root.style.setProperty('--sd', o.sd + 'ms');
+  for (let i = 0; i < lanes.length; i++){
+    if (!alive()) return false;
+    if (o.dim) lanes.slice(0, i).forEach(l => l.classList.add('dim'));
+    enterLane(lanes[i], o);
+    if (i < lanes.length - 1) await wait(o.stagger);
+  }
+  await wait(o.move + o.settle);
+  if (!alive()) return false;
+  lanes.forEach(l => l.classList.remove('dim'));
+  if (o.band) root.querySelectorAll('.band').forEach(b => b.classList.add('on'));
+  if (o.pop) root.querySelectorAll('.lane.best .val').forEach(v => anim(v, [{transform:'scale(1)'}, {transform:'scale(1.14)'}, {transform:'scale(1)'}], {duration:520, easing:'ease-in-out', fill:'none'}));
+  await wait(o.toVerdict);
+  if (!alive()) return false;
+  const v = root.querySelector('.verdict'); if (v) v.classList.add('in');
+  return true;
+}
+
+/* ---------- live data + filters ---------- */
+const L = D.live.slice().sort((a, b) => a.n.localeCompare(b.n));
+L.forEach(c => {
+  c.om = Math.abs(T(c.m) - T(c.y)) / 10;          // shown "off by", rounded like on screen
+  c.ou = Math.abs(T(c.u) - T(c.y)) / 10;
+  const em = Math.abs(c.m - c.y), eu = Math.abs(c.u - c.y);   // official comparison: exact numbers
+  c.who = em < eu ? 'model' : eu < em ? 'usual' : 'tie';
+});
+const N = L.length;
+const SECTORS = [...new Set(L.map(c => c.s))].sort();
+const DAYS = [...new Set(L.map(c => c.d))].sort();
+const F = {sec:'', day:'', who:''};
+const match = (c, skip) => (skip === 'sec' || !F.sec || c.s === F.sec) && (skip === 'day' || !F.day || c.d === F.day) && (skip === 'who' || !F.who || c.who === F.who);
+const FL = () => L.filter(c => match(c));
+let liveCur = L.find(c => c.t === 'PLTR') || L[0];
+let liveToken = 0;
+
+const HASTIE = L.some(c => c.who === 'tie');
+function syncControls(){
+  const opt = (v, t, k, cur) => `<option value="${esc(v)}"${k || v === cur || !v ? '' : ' disabled'}>${esc(t)} (${k})</option>`;
+  const cS = v => L.filter(c => match(c, 'sec') && (!v || c.s === v)).length;
+  const cD = v => L.filter(c => match(c, 'day') && (!v || c.d === v)).length;
+  const cW = v => L.filter(c => match(c, 'who') && (!v || c.who === v)).length;
+  $('#fsec').innerHTML = opt('', 'All sectors', cS(''), F.sec) + SECTORS.map(v => opt(v, v, cS(v), F.sec)).join('');
+  $('#fday').innerHTML = opt('', 'All days', cD(''), F.day) + DAYS.map(v => opt(v, shortDay(v), cD(v), F.day)).join('');
+  $('#fwho').innerHTML = opt('', 'Both', cW(''), F.who) + [['model','Our model'],['usual','Its usual jump']].concat(HASTIE ? [['tie','Tie']] : []).map(([v, t]) => opt(v, t, cW(v), F.who)).join('');
+  $('#fsec').value = F.sec; $('#fday').value = F.day; $('#fwho').value = F.who;
+  const n = FL().length, act = [F.sec, F.day, F.who].filter(Boolean).length;
+  $('#qlab').innerHTML = n === N ? `Pick one of ${N} companies` : n ? `Pick one of <b class="tnum">${n}</b> of ${N} companies` : `<b>0</b> of ${N} companies match`;
+  $('#ftogt').textContent = act ? `Filters (${act})` : 'Filters';
+  $('#fclear').hidden = !act;
+  $('#surprise').disabled = $('#biggest').disabled = !n;
+}
+function applyFilters(){
+  syncControls();
+  const list = FL();
+  if (!list.length){ renderEmpty(); updateGlance(); return; }
+  if (!liveCur || !list.includes(liveCur) || $('#liveout .empty')) { liveCur = list.includes(liveCur) ? liveCur : list[0]; q.value = label(liveCur); renderLive(liveCur, false); }
+  updateGlance();
+}
+function clearFilters(){ F.sec = F.day = F.who = ''; applyFilters(); }
+$('#fsec').addEventListener('change', e => { F.sec = e.target.value; applyFilters(); });
+$('#fday').addEventListener('change', e => { F.day = e.target.value; applyFilters(); });
+$('#fwho').addEventListener('change', e => { F.who = e.target.value; applyFilters(); });
+$('#fclear').addEventListener('click', clearFilters);
+let fAnim = null;
+$('#ftog').addEventListener('click', e => {
+  const fr = $('#fr1'), open = e.currentTarget.getAttribute('aria-expanded') !== 'true';
+  e.currentTarget.setAttribute('aria-expanded', open);
+  const from = fAnim ? fr.getBoundingClientRect().height : null;
+  if (fAnim){ fAnim.onfinish = null; fAnim.cancel(); fAnim = null; }
+  fr.style.overflow = '';
+  if (RM){ fr.hidden = !open; return; }
+  fr.hidden = false;
+  const cs = getComputedStyle(fr), H = fr.getBoundingClientRect().height, pt = cs.paddingTop, mt = cs.marginTop;
+  const shut = {height:'0px', paddingTop:'0px', marginTop:'0px', opacity:0}, full = {height:H + 'px', paddingTop:pt, marginTop:mt, opacity:1};
+  const a = open ? Object.assign({}, shut, from != null ? {height:from + 'px', opacity:from / H} : {}) : Object.assign({}, full, from != null ? {height:from + 'px'} : {});
+  fr.style.overflow = 'hidden';
+  fAnim = fr.animate([a, open ? full : shut], {duration: open ? 220 : 180, easing:EZ, fill:'forwards'});
+  fAnim.onfinish = () => { fr.style.overflow = ''; if (!open) fr.hidden = true; fAnim.cancel(); fAnim = null; };
+});
+$('#surprise').addEventListener('click', () => {
+  const list = FL(); if (!list.length) return;
+  const pool = list.length > 1 ? list.filter(c => c !== liveCur) : list;
+  choose(pool[Math.floor(Math.random() * pool.length)]);
+});
+$('#biggest').addEventListener('click', () => {
+  const list = FL(); if (!list.length) return;
+  choose(list.reduce((a, b) => b.y > a.y ? b : a));
+});
+
+function renderEmpty(){
+  ++liveToken;
+  liveCur = null;
+  q.value = '';
+  $('#liveout').innerHTML = `<div class="empty"><h3>No companies match</h3><p>Try fewer filters.</p><button class="btn2" type="button" id="eclear">Clear filters</button></div>`;
+  $('#eclear').addEventListener('click', () => { clearFilters(); q.focus({preventScroll:true}); closeList(); });
+}
+
+/* ---------- live card ---------- */
+function renderLive(c, first){
+  const tok = ++liveToken;
+  const out = $('#liveout');
+  const o = MO.live, d0 = first ? MO.liveFirst : 0;
+  out.innerHTML = `
+    <div class="co"><h3>${esc(c.n)}</h3><span class="tk">${esc(c.t)} · reported ${shortDay(c.d)}</span></div>
+    <div class="real"><span class="k">The real jump</span><span class="num tnum" id="lnum">${pct(c.y)}</span></div>
+    ${scaleHTML(c.y, [{key:'model', val:c.m}, {key:'usual', val:c.u}])}`;
+  out.style.setProperty('--rise', o.rise + 'px'); out.style.setProperty('--sd', o.sd + 'ms');
+  const lnum = $('#lnum');
+  const alive = () => tok === liveToken && out.contains(lnum);
+  anim(out.querySelector('.co'), [{opacity:0}, {opacity:1}], {duration:200, delay:d0});
+  anim(out.querySelector('.real'), [{opacity:0}, {opacity:1}], {duration:200, delay:d0});
+  const frames = [...out.querySelectorAll('.frame')];
+  if (!RM){ lnum.textContent = '0.0%'; frames.forEach(f => f.style.opacity = 0); }
+  (async () => {
+    await wait(d0); if (!alive()) return;
+    countUp(lnum, +f1(c.y), 1, o.realMs, '%', o.realEase);
+    await wait(o.realMs + o.afterReal); if (!alive()) return;
+    frames.forEach(f => f.style.opacity = '');
+    showFrame(out, o);
+    await wait(o.frameMs); if (!alive()) return;
+    playScale(out, o, alive);
+  })();
+}
+
+/* ---------- week box ---------- */
+/* official week comparison: exact, unrounded misses */
+const WK = (() => {
+  let sm = 0, su = 0, wm = 0, wu = 0; const k = {model:0, usual:0, tie:0};
+  L.forEach(c => {
+    const em = Math.abs(c.m - c.y), eu = Math.abs(c.u - c.y);
+    sm += em; su += eu;
+    if (em < eu){ k.model++; wm += eu - em; } else if (eu < em){ k.usual++; wu += em - eu; } else k.tie++;
+  });
+  const am = sm / N, au = su / N, even = am.toFixed(2) === au.toFixed(2);
+  const mm = k.model ? wm / k.model : 0, mu = k.usual ? wu / k.usual : 0;   // mean winning margins
+  return {am, au, k, even, mm, mu, story: even && k.usual > k.model && mm > mu};
+})();
+$('#live1').textContent = WK.even ? 'even on average' : WK.am < WK.au ? 'our model missed less' : 'its usual jump missed less';
+/* ---------- glance chart ---------- */
+const gw = $('#gwrap');
+let GX = null, hovC = null, tipC = null, lastPT = 'mouse', glanceFirst = true;
+const DCLIP = 4, DR = 5, DD = 2 * DR + 1;    // clip at +-4 (most companies sit within 2.5), dot radius, min spacing
+L.forEach(c => { c.dd = Math.abs(c.u - c.y) - Math.abs(c.m - c.y); });   // >0: our model closer (exact)
+function swarm(list, X){
+  const lv = new Map(), pos = new Map();
+  let maxL = 0;
+  list.map(c => [c, X(c.dd)]).sort((a, b) => a[1] - b[1]).forEach(([c, x]) => {
+    for (let k = 0; ; k++){
+      for (const l of k ? [k, -k] : [0]){
+        const row = lv.get(l) || [];
+        if (row.every(px => Math.abs(px - x) >= DD)){ row.push(x); lv.set(l, row); pos.set(c, {x, l}); maxL = Math.max(maxL, k); return; }
+      }
+    }
+  });
+  return {pos, maxL};
+}
+function buildGlance(){
+  const W = gw.clientWidth; if (!W) return;
+  const pad = 14, cx = W / 2, half = W / 2 - pad - DR;
+  const X = d => cx + Math.max(-DCLIP, Math.min(DCLIP, d)) / DCLIP * half;
+  const full = swarm(L, X).maxL;
+  const top = 30, y0 = top + full * DD + DR + 4, axY = y0 + full * DD + DR + 10, H = axY + 30;
+  const ticks = [-4, 0, 4].map(v => `<text x="${X(v)}" y="${axY+22}" text-anchor="${v === -DCLIP ? 'start' : v === DCLIP ? 'end' : 'middle'}">${v === 0 ? '0' : '4%+'}</text>`).join('');
+  const dots = L.map((c, i) => `<circle class="gd" data-i="${i}" style="cx:${X(c.dd).toFixed(1)}px;cy:${y0}px"/>`).join('');
+  gw.innerHTML = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Each company placed by how much closer one guess was. Right of center: our model closer. Left: its usual jump closer. Use the company picker to choose one.">
+    <text class="rl" x="${pad - 6}" y="16" style="fill:var(--usual)">← Its usual jump</text>
+    <text class="rl" x="${W - pad + 6}" y="16" text-anchor="end" style="fill:var(--model)">Our model →</text>
+    <line class="grid" x1="${pad - 6}" x2="${W - pad + 6}" y1="${axY}" y2="${axY}"/>
+    <line class="zero" x1="${cx}" x2="${cx}" y1="${top - 4}" y2="${axY + 5}"/>
+    ${ticks}
+    <g class="dots">${dots}</g>
+    <g class="selm"><circle r="10"/><text y="-15" text-anchor="middle"></text></g>
+  </svg><div class="gtip" hidden></div>`;
+  GX = {X, W, H, y0, top, pos:new Map(), circles:[...gw.querySelectorAll('.gd')]};
+  if (glanceFirst && !RM){
+    GX.circles.forEach((el, i) => { el.classList.add('pop'); el.style.animationDelay = (MO.glanceDelay + Math.min(Math.abs(L[i].dd), 4) * 110 + (i % 7) * 18) + 'ms'; });
+    anim(gw.querySelector('.selm'), [{opacity:0}, {opacity:1}], {duration:250, delay:MO.glanceDelay + 650});
+    glanceFirst = false;
+  }
+  updateGlance();
+}
+function updateGlance(){
+  if (!GX) return;
+  const g = gw.querySelector('.dots');
+  const list = FL();
+  const {pos} = swarm(list, GX.X);
+  GX.pos = new Map();
+  GX.circles.forEach((el, i) => {
+    const c = L[i], p = pos.get(c);
+    el.setAttribute('class', 'gd' + (p ? ' on ' + (c.who === 'model' ? 'cm' : c.who === 'usual' ? 'cu' : 'ct') : ' off') + (el.classList.contains('pop') ? ' pop' : ''));
+    if (p){
+      const y = GX.y0 - p.l * DD;
+      el.style.cx = p.x.toFixed(1) + 'px'; el.style.cy = y.toFixed(1) + 'px';
+      GX.pos.set(c, {x:p.x, y});
+      g.appendChild(el);
+    }
+  });
+  const n = list.length;
+  $('#gh').textContent = n === N ? 'Who was closer, company by company' : `Showing ${n} of ${N}`;
+  $('#gcap').textContent = n ? 'Each dot is a company. Farther out = bigger difference.' : 'No companies match these filters.';
+  moveSel();
+  hideTip();
+}
+function moveSel(){
+  if (!GX) return;
+  const sm = gw.querySelector('.selm');
+  const p = liveCur && GX.pos.get(liveCur);
+  sm.style.display = p ? '' : 'none';
+  if (!p) return;
+  sm.style.transform = `translate(${p.x}px,${p.y}px)`;
+  const t = sm.querySelector('text');
+  t.textContent = liveCur.t;
+  t.setAttribute('text-anchor', p.x > GX.W - 40 ? 'end' : p.x < 40 ? 'start' : 'middle');
+  t.setAttribute('y', p.y < GX.top + 20 ? 27 : -15);
+}
+function nearest(ev){
+  const r = gw.querySelector('svg').getBoundingClientRect();
+  const px = ev.clientX - r.left, py = ev.clientY - r.top;
+  let best = null, bd = 22;
+  GX.pos.forEach((p, c) => { const d = Math.hypot(p.x - px, p.y - py); if (d < bd){ bd = d; best = c; } });
+  return best;
+}
+function showTip(c, touch){
+  const tip = gw.querySelector('.gtip');
+  tipC = c;
+  const narrow = innerWidth <= 980;
+  const wasHidden = tip.hidden;
+  tip.className = 'gtip' + (touch && narrow ? ' touch' : '');
+  tip.innerHTML = `<b>${esc(c.n)}</b> ${esc(c.t)}<br><span class="tm">Our model off by ${c.om.toFixed(1)}%</span><br><span class="tu">Its usual jump off by ${c.ou.toFixed(1)}%</span>${touch && narrow ? `<button type="button">See details</button>` : ''}`;
+  tip.hidden = false;
+  const pp = GX.pos.get(c); if (!pp) return;
+  const x = pp.x, y = pp.y, tw = tip.offsetWidth, th = tip.offsetHeight;
+  const left = Math.min(Math.max(0, x - tw / 2), GX.W - tw);
+  // keep clear of the selected company's label (sits just above its dot)
+  const sel = liveCur && liveCur !== c ? GX.pos.get(liveCur) || null : (liveCur === c ? pp : null);
+  const hits = t => sel && left < sel.x + 30 && left + tw > sel.x - 30 && t < sel.y + 12 && t + th > sel.y - 36;
+  const cands = [y - th - 14, y + 16, sel ? sel.y + 16 : y + 16, sel ? sel.y - th - 40 : y - th - 14];
+  let top = cands.find(t => t >= -4 && t + th <= GX.H + 4 && !hits(t));
+  if (top === undefined) top = Math.max(0, y - th - 14);
+  tip.style.left = left + 'px'; tip.style.top = top + 'px';
+  if (wasHidden) anim(tip, [{opacity:0, transform:'translateY(4px)'}, {opacity:1, transform:'none'}], {duration:150});
+  GX.circles.forEach(el => el.classList.toggle('hov', L[+el.dataset.i] === c));
+  const b = tip.querySelector('button');
+  if (b) b.addEventListener('click', ev => { ev.stopPropagation(); hideTip(); $('#liveout').scrollIntoView({behavior: RM ? 'auto' : 'smooth', block: 'start'}); });
+}
+function hideTip(){
+  if (!GX) return;
+  const tip = gw.querySelector('.gtip'); if (tip) tip.hidden = true;
+  tipC = null; GX.circles.forEach(el => el.classList.remove('hov'));
+}
+gw.addEventListener('pointerdown', e => { lastPT = e.pointerType || 'mouse'; });
+gw.addEventListener('pointermove', e => {
+  if (!GX || e.pointerType !== 'mouse') return;
+  const c = nearest(e);
+  gw.style.cursor = c ? 'pointer' : 'default';
+  if (c !== hovC){ hovC = c; c ? showTip(c, false) : hideTip(); }
+});
+gw.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse'){ hovC = null; hideTip(); } });
+gw.addEventListener('click', e => {
+  if (!GX || e.target.closest('.gtip')) return;
+  const c = nearest(e);
+  if (!c){ if (lastPT !== 'mouse') hideTip(); return; }
+  if (c !== liveCur) choose(c);            // choose() moves the ring; keep the popup beside it
+  showTip(c, lastPT !== 'mouse');
+});
+let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (gw.clientWidth && (!GX || GX.W !== gw.clientWidth)) buildGlance(); placeTags(); }, 120); });
+
+/* combobox */
+const q = $('#q'), lb = $('#lb');
+let opts = [], act = -1;
+const label = c => `${c.n} (${c.t})`;
+q.value = label(liveCur);
+function openList(filter){
+  const f = (filter || '').trim().toLowerCase();
+  const rank = c => { const t = c.t.toLowerCase(), n = c.n.toLowerCase();
+    return t === f ? 0 : t.startsWith(f) ? 1 : n.startsWith(f) ? 2 : 3; };
+  const base = FL();
+  opts = base.filter(c => !f || c.n.toLowerCase().includes(f) || c.t.toLowerCase().startsWith(f));
+  if (f) opts = opts.map((c, i) => [rank(c), i, c]).sort((a, b) => a[0] - b[0] || a[1] - b[1]).map(x => x[2]);
+  act = opts.length ? 0 : -1;
+  lb.innerHTML = opts.length
+    ? opts.map((c, i) => `<li role="option" id="o${i}" data-i="${i}" aria-selected="${i===act}">${esc(c.n)}<span>${esc(c.t)}</span></li>`).join('')
+    : `<li class="none" role="option" aria-disabled="true">${base.length ? 'No company matches. Try a ticker like PLTR.' : 'No companies match these filters.'}</li>`;
+  if (lb.hidden) anim(lb, [{opacity:0, transform:'translateY(-4px)'}, {opacity:1, transform:'none'}], {duration:150});
+  lb.hidden = false; q.setAttribute('aria-expanded','true');
+  if (act >= 0) q.setAttribute('aria-activedescendant','o0'); else q.removeAttribute('aria-activedescendant');
+}
+function closeList(){ lb.hidden = true; q.setAttribute('aria-expanded','false'); q.removeAttribute('aria-activedescendant'); }
+function resetQ(){ q.value = liveCur && FL().length ? label(liveCur) : ''; }
+function choose(c){ liveCur = c; q.value = label(c); closeList(); renderLive(c, false); moveSel(); }
+function setAct(i){
+  if (!opts.length) return;
+  act = (i + opts.length) % opts.length;
+  lb.querySelectorAll('li').forEach((li, j) => li.setAttribute('aria-selected', j === act));
+  const el = $('#o' + act); el.scrollIntoView({block:'nearest'}); q.setAttribute('aria-activedescendant', 'o' + act);
+}
+q.addEventListener('focus', () => {
+  q.select(); openList('');
+  if (innerWidth < 600) setTimeout(() => { const y = q.getBoundingClientRect().top + scrollY - 40; scrollTo({top:y, behavior: RM ? 'auto' : 'smooth'}); }, 60);
+});
+q.addEventListener('input', () => openList(q.value));
+q.addEventListener('keydown', e => {
+  if (e.key === 'ArrowDown'){ e.preventDefault(); lb.hidden ? openList('') : setAct(act + 1); }
+  else if (e.key === 'ArrowUp'){ e.preventDefault(); setAct(act - 1); }
+  else if (e.key === 'Enter'){ e.preventDefault(); if (!lb.hidden && act >= 0) choose(opts[act]); }
+  else if (e.key === 'Escape'){ closeList(); resetQ(); }
+});
+lb.addEventListener('mousedown', e => { const li = e.target.closest('li[data-i]'); if (li){ e.preventDefault(); choose(opts[+li.dataset.i]); } });
+q.addEventListener('blur', () => setTimeout(() => { if (!lb.hidden){ closeList(); resetQ(); } }, 120));
+
+/* ---------- game ---------- */
+const PSEC = [...new Set(D.past.map(p => p[8]))].sort();
+const gsec = $('#gsec');
+gsec.innerHTML = `<option value="">Any sector</option>` + PSEC.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('');
+gsec.addEventListener('change', () => newRound());
+let G = null;            // current report, kept only in JS memory
+let played = 0, beat = 0, round = 0;
+/* lift the bar tags clear of value labels, the dashed line and each other, then reserve headroom above the plot */
+function placeTags(){
+  const plot = $('#game .plot'); if (!plot || !plot.offsetWidth) return;
+  const tags = [...plot.querySelectorAll('.bt')].sort((a, b) => b.textContent.includes('biggest') - a.textContent.includes('biggest'));
+  const fixed = [...plot.querySelectorAll('.bv')].map(e => e.getBoundingClientRect());
+  const ul = plot.querySelector('.uline').getBoundingClientRect();
+  const placed = [];
+  plot.style.marginTop = '';
+  tags.forEach(t => {
+    t.style.bottom = t.dataset.b + 'px';
+    for (let k = 0; k < 10; k++){
+      const r = t.getBoundingClientRect();
+      const hit = fixed.concat(placed, [{left:-1e4, right:1e4, top:ul.top - 1, bottom:ul.bottom + 1}])
+        .find(o => r.left < o.right - 1 && r.right > o.left + 1 && r.top < o.bottom - 1 && r.bottom > o.top + 1);
+      if (!hit) break;
+      t.style.bottom = (t.parentElement.getBoundingClientRect().bottom - hit.top + 2).toFixed(1) + 'px';
+    }
+    placed.push(t.getBoundingClientRect());
+  });
+  const pt = plot.getBoundingClientRect().top;
+  const minTop = Math.min(pt, ...placed.map(r => r.top), ...fixed.map(r => r.top));
+  plot.style.marginTop = Math.max(28, pt - minTop + 6).toFixed(0) + 'px';
+}
+function newRound(){
+  round++;
+  const pool = gsec.value ? D.past.filter(p => p[8] === gsec.value) : D.past;
+  const P = pool[Math.floor(Math.random() * pool.length)];
+  G = {t:P[0], d:P[1], y:P[2], m:P[3], u:P[4], l8:P[5], r:P[6], vix:P[7], s:P[8], r21:P[9]};
+  const nm = (D.names[G.t] || G.t).replace(/\s*&$/, '');
+  $('#game').innerHTML = `
+    <div class="ask">
+      <div class="co"><h3>${esc(nm)}</h3><span class="tk">${esc(G.t)} · ${day(G.d)}</span></div>
+      ${pillsHTML(G.vix, G.r, false, G.r21)}
+      <div class="l8"><div class="l8head"><span>Its last 8 jumps, oldest to newest (%)</span><span class="ulg">Its usual jump ${pct(G.u)}</span></div>${l8SVG(G.l8, G.u)}</div>
+      <form class="guessrow" id="gf" novalidate>
+        <label for="g">How big was the jump? Your guess</label><div class="inbox"><input id="g" type="text" inputmode="decimal" autocomplete="off" placeholder="0.0"></div>
+        <button class="btn" type="submit">Show me</button>
+      </form>
+      <p class="hint" id="hint" aria-live="polite"></p>
+    </div>
+    <div id="reveal"></div>`;
+  $('#gf').addEventListener('submit', e => { e.preventDefault(); reveal(); });
+  placeTags();
+}
+function l8SVG(arr, u){
+  const PH = 120, LBL = 20;                       // plot height and label height, px
+  const mx = Math.max(...arr, u) * 1.04 || 1;
+  const px = v => v / mx * PH;
+  const big = arr.lastIndexOf(Math.max(...arr));     // ties go to the newest
+  const bars = arr.map((v, i) => {
+    // label sits just above its bar; if the dashed line would run through it, lift it above the line
+    let b = px(v) + 3;
+    const lineY = px(u);
+    if (lineY >= b - 3 && lineY <= b + LBL + 2) b = lineY + 5;
+    const tg = [i === arr.length - 1 ? 'last time' : '', i === big ? 'biggest' : ''].filter(Boolean).join(', ');
+    const al = i === 0 ? ' al' : i === arr.length - 1 ? ' ar' : '';
+    return `<div class="c"><span class="bv tnum lbl" style="bottom:${b.toFixed(1)}px;animation-delay:${200+i*40}ms"><em>${f1(v)}</em></span>${tg ? `<span class="bt lbl${al}" data-b="${(b + LBL + 1).toFixed(1)}" style="bottom:${(b + LBL + 1).toFixed(1)}px;animation-delay:520ms">${tg}</span>` : ''}<span class="b" style="height:${(v / mx * 100).toFixed(2)}%;animation-delay:${i*40}ms"></span></div>`;
+  }).join('');
+  return `<div class="l8c" role="img" aria-label="Its last 8 jumps, oldest to newest: ${arr.map(f1).join(', ')} percent. Its usual jump is ${pct(u)}.">
+    <div class="plot">${bars}<span class="uline" style="bottom:${(u / mx * 100).toFixed(2)}%"></span></div>
+  </div>`;
+}
+async function reveal(){
+  const raw = $('#g').value.trim().replace(',', '.').replace('%','');
+  const hint = $('#hint');
+  if (!raw){ hint.textContent = 'Type a number first, like 4.5. Tip: a nervous market or a stock moving more than usual often means a bigger jump.'; $('#g').focus(); return; }
+  const g = Number(raw);
+  if (!isFinite(g)){ hint.textContent = 'That needs to be a number, like 4.5.'; return; }
+  if (g < 0){ hint.textContent = 'We only look at the size of the jump, so use a positive number.'; return; }
+  if (g > 100){ hint.textContent = 'Try something under 100. Most jumps are under 15%.'; return; }
+  hint.textContent = '';
+  const R = G, my = round;
+  $('#gf').hidden = true; hint.hidden = true;
+  const rows = [{key:'you', val:g}, {key:'model', val:R.m}, {key:'usual', val:R.u}];
+  const {offs} = closest(R.y, rows);
+  played++; if (offs[0] < offs[1]) beat++;
+  const box = $('#reveal');
+  box.innerHTML = `<div class="real" style="margin-top:4px"><span class="k">The real jump</span><span class="num tnum" id="rnum">0.0%</span></div>
+    ${scaleHTML(R.y, rows)}
+    <div class="again stage"><button class="btn2" id="again" type="button">Try another report</button></div>`;
+  $('#again').addEventListener('click', () => { newRound(); $('.gcard').scrollIntoView({behavior: RM ? 'auto' : 'smooth', block:'nearest'}); setTimeout(() => { const i = $('#g'); if (i) i.focus({preventScroll:true}); }, RM ? 0 : 300); });
+  box.scrollIntoView({behavior: RM ? 'auto' : 'smooth', block: 'nearest'});
+  // Pace it so each step lands: the real jump first, then each guess, then the verdict.
+  const o = MO.game, alive = () => my === round && box.isConnected;
+  box.style.setProperty('--rise', o.rise + 'px'); box.style.setProperty('--sd', o.sd + 'ms');
+  box.querySelectorAll('.frame').forEach(f => { if (!RM) f.style.opacity = 0; });
+  countUp($('#rnum'), +f1(R.y), 1, o.realMs, '%', o.realEase);
+  await wait(o.realMs + o.afterReal);
+  if (!alive()){ renderTally(); return; }
+  box.querySelectorAll('.frame').forEach(f => f.style.opacity = '');
+  showFrame(box, o);
+  await wait(o.frameMs);
+  if (!alive()){ renderTally(); return; }
+  const ok = await playScale(box, o, alive);
+  renderTally();
+  if (!ok) return;
+  await wait(o.toButton);
+  if (!alive()) return;
+  const ag = box.querySelector('.again'); if (ag) ag.classList.add('in');
+}
+function renderTally(){
+  if (!played){
+    $('#tally').innerHTML = `<h3 style="font-size:22px;margin:0 0 4px">Your score</h3><p class="k" style="margin:0">Make a guess to start.</p>`;
+    return;
+  }
+  const ib = infoBtn('How is the score counted?', 'You beat our model when your guess was closer to the real jump. Ties don\'t count.');
+  $('#tally').innerHTML = `<h3 style="font-size:22px;margin:0 0 4px">Your score</h3>
+    <span class="k">You beat our model ${ib.btn}</span>
+    <span class="num tnum"><span class="y">${beat}</span> <span style="color:var(--muted);font-size:.55em">of ${played}</span></span>${ib.box}`;
+}
+
+/* ---------- tabs ---------- */
+const seg = $('.seg');
+function show(t, focus){
+  seg.dataset.on = t;
+  seg.querySelectorAll('button').forEach(b => {
+    const on = b.dataset.t === t;
+    b.setAttribute('aria-selected', on); b.tabIndex = on ? 0 : -1;
+    if (on && focus) b.focus();
+  });
+  ['live','past'].forEach(k => {
+    const p = $('#p-' + k), on = k === t;
+    p.hidden = !on;
+    if (on){ p.classList.remove('enter'); void p.offsetWidth; p.classList.add('enter'); }
+  });
+  if (t === 'past'){
+    placeTags();
+    const sw = $('.switch');
+    if (sw.getBoundingClientRect().top > 4) scrollTo({top: sw.getBoundingClientRect().top + scrollY, behavior: RM ? 'auto' : 'smooth'});
+  }
+  if (t === 'live'){
+    if (!GX || GX.W !== gw.clientWidth) buildGlance();
+  }
+}
+seg.addEventListener('click', e => { const b = e.target.closest('button'); if (b) show(b.dataset.t); });
+seg.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowLeft'){ e.preventDefault(); show(seg.dataset.on === 'live' ? 'past' : 'live', true); }
+});
+
+/* ---------- how it works (method only) ---------- */
+const P = x => (x * 100).toFixed(1) + '%';
+$('#how').innerHTML = `
+  <p><b class="u">Its usual jump</b> is the baseline: the median absolute size of the company's last 8 earnings moves.</p>
+  <p><b class="m">Our model</b> is a LightGBM model. It looks at the company's last 8 jumps (the middle, the average, the biggest and the most recent), how much the stock moved day to day over the past month compared with the 3 months before (the "Moving lately" tab), how much the price rose or fell over the past month (the "Past month" tab), and the market's fear gauge, the VIX (the "Market mood" tab). The tabs in the game are inputs the model also looks at, not the reason for any one guess.</p>
+  <p>The model was locked and run once on a held-out lockbox of ${D.met.n.toLocaleString('en-US')} past reports (2025 to Sep 2026). The likely range of the improvement is ${P(D.met.lo)} to ${P(D.met.hi)} smaller misses, and our model was closer on about ${Math.round(D.met.wr*100)}% of reports.</p>
+  <p>The live week's average misses were ${WK.even ? WK.am.toFixed(2) + ' for both' : WK.am.toFixed(2) + ' for our model and ' + WK.au.toFixed(2) + ' for the usual jump'}; the usual jump was closer for ${WK.k.usual} companies and our model for ${WK.k.model}${WK.mm > WK.mu ? ', with bigger margins when our model was closer' : ''}. One week can be luck, so the ${D.met.n.toLocaleString('en-US')}-report test counts more.</p>
+  <p>All misses are in percentage points. Totals, the "Who was closer" filter and the dot chart compare exact numbers. Each company's "was closest" line compares the rounded numbers shown on screen, so a near-tie can read as a tie there.</p>`;
+
+/* ---------- init ---------- */
+syncControls();
+renderLive(liveCur, true);
+buildGlance();
+newRound();
+renderTally();
+})();
+</script>
+</body>
+</html>
